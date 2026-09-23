@@ -146,3 +146,40 @@ export {
   type DossierInput,
   buildTransitionDossier,
 } from './dossier/dossier'
+export { toJsonValue, toPrettyJson } from './serialize/json'
+export { toPolicyJson, serializePolicy } from './plan/serialize'
+export {
+  type ReferenceComparison,
+  type ReferenceComparisonInput,
+  buildReferenceComparison,
+} from './reporting/comparison'
+export {
+  type TimelineNode,
+  buildTransitionTimeline,
+} from './reporting/timeline'
+export {
+  type DepthClass,
+  type LiquidityGapView,
+  type LiquidityGapInput,
+  buildLiquidityGap,
+} from './reporting/liquidity-gap'
+export {
+  type ParameterDiff,
+  type ConfigurationDiff,
+  diffDbcPlans,
+  normalizedDifference,
+} from './reporting/config-diff'
+export {
+  type InspectorRow,
+  type DbcInspection,
+  buildDbcInspection,
+} from './reporting/dbc-inspector'
+export {
+  type ReplayPhase,
+  type ReplayProvenance,
+  type ReplayObservation,
+  type ReplayPoint,
+  type ReplayResult,
+  type ReplayInput,
+  replayTransition,
+} from './replay/replay'

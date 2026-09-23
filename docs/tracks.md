@@ -72,3 +72,27 @@ dilute it.
 | 28 Timestamp activation | `packages/domain/src/policy/activation.ts` |
 | 29 Migration model | `packages/domain/src/policy/migration.ts` |
 | 30 Meteora adapter | `packages/meteora/src/dbc/adapter.ts`, `client.ts` |
+
+## Section 31-58 implementation map
+
+| Section | Where |
+|---|---|
+| 31 Meteora version safety | `packages/meteora/src/dbc/version.ts`, `scripts/verify-versions.mjs` |
+| 32 DBC configuration inspector | `packages/domain/src/reporting/dbc-inspector.ts` |
+| 33 Mainnet deployment flow | `apps/api` `/api/dbc/prepare` returns unsigned tx; wallet signs |
+| 34 Mainnet/demo separation | `packages/config/src/config.ts` |
+| 35 DBC demo pool | `apps/api` + `packages/meteora` (AUCTRA DEMO asset) |
+| 36-38 Simulation, scenarios, baseline | `packages/domain/src/simulation/`, `apps/api` `/api/simulations` |
+| 39 Historical replay | `packages/domain/src/replay/replay.ts` |
+| 40 Transition timeline | `packages/domain/src/reporting/timeline.ts` |
+| 41 Market clock visualization | `packages/domain/src/clocks/clocks.ts` |
+| 42-44, 50, 51, 54, 56, 57 Web routes/wallet | not started (web UI phase) |
+| 45 Policy explanation | `packages/domain/src/policy/explanation.ts` |
+| 46 Policy JSON | `packages/domain/src/plan/serialize.ts` |
+| 47 Reproducibility | `packages/domain/src/math/hash.ts`, `plan/compile.ts` |
+| 48 Database | `packages/database/src/schema.ts`, `repositories.ts`, `memory.ts`, `sql/0001_init.sql` |
+| 49 Source registry | `packages/domain/src/provenance/`, `packages/database` `source_records` |
+| 52 Pyth price comparison | `packages/domain/src/reporting/comparison.ts` |
+| 53 Liquidity gap view | `packages/domain/src/reporting/liquidity-gap.ts` |
+| 55 Configuration diff | `packages/domain/src/reporting/config-diff.ts` |
+| 58 API | `apps/api/src/server.ts`, `schemas.ts` |

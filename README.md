@@ -20,13 +20,28 @@ built yet.
 |---|---|
 | Originality audit + pinned versions | done — [`docs/originality.md`](./docs/originality.md), [`docs/research/`](./docs/research/README.md), [`docs/sdk-versions.md`](./docs/sdk-versions.md) |
 | Sections 1–30 (ingestion, lifecycle, transition, curve, fees, migration, DBC adapter) | done — see [`docs/tracks.md`](./docs/tracks.md) |
-| `@auctra/domain` — lifecycle, transition, policy, plan, simulation, clocks, dossier | done (48 tests) |
+| Sections 31–58 (reporting, replay, network gating, database, typed API) | done (API only; web UI not started) |
+| `@auctra/domain` — lifecycle, transition, policy, plan, simulation, clocks, dossier, reporting, replay | done (59 tests) |
 | `@auctra/prestocks` — asset provider, normalization, lifecycle providers | done (15 tests) |
 | `@auctra/pyth` — reference model, freshness, feed registry, discovery | done (12 tests) |
 | `@auctra/meteora` — DBC adapter, validation, migration status, version guard | done (15 tests) |
-| `@auctra/database`, `apps/web`, `apps/api`, `apps/worker` | not started |
+| `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
+| `@auctra/database` — Postgres schema + repository layer | done (6 tests) |
+| `@auctra/api` — typed backend (Section 58 routes) | done (10 tests) |
+| `apps/web`, `apps/worker` | not started |
 
-90 tests, clean typecheck across all packages.
+124 tests, clean typecheck across all packages.
+
+### Running the API
+
+```bash
+pnpm --filter @auctra/api dev   # http://localhost:3001
+curl localhost:3001/api/health
+```
+
+The API uses the in-memory repository layer and the `AUCTRA DEMO` lifecycle
+provider by default (`DEMO_MODE=true`). Mainnet is unreachable unless
+`ENABLE_MAINNET=true` is set explicitly.
 
 Nothing here is investment advice. Auctra produces analysis and proposed
 configurations; it does not custody assets and does not submit transactions
