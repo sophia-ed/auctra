@@ -87,7 +87,7 @@ class ReadOnlyDbcClient implements MeteoraDbcClient {
 describe('worker (Section 62)', () => {
   it('refreshes assets, events, references and lifecycle without submitting', async () => {
     const repos = createInMemoryRepositories()
-    repos.pools.upsert({
+    await repos.pools.upsert({
       address: 'POOL',
       config: 'cfg',
       baseMint: 'base',
@@ -113,9 +113,9 @@ describe('worker (Section 62)', () => {
     expect(report.errors).toEqual([])
     expect(report.stale).toEqual([])
 
-    expect(repos.assets.getBySymbol('SPACEX')).toBeDefined()
-    expect(repos.events.listByAsset('spacex')).toHaveLength(1)
-    expect(repos.pools.listSnapshots('POOL')).toHaveLength(1)
+    expect(await repos.assets.getBySymbol('SPACEX')).toBeDefined()
+    expect(await repos.events.listByAsset('spacex')).toHaveLength(1)
+    expect(await repos.pools.listSnapshots('POOL')).toHaveLength(1)
   })
 
   it('keeps the last good snapshot when PreStocks fails', async () => {
@@ -138,7 +138,7 @@ describe('worker (Section 62)', () => {
     expect(second.stale).toContain('prestocks')
     expect(second.assetsRefreshed).toBe(1)
     // the previously verified asset was not replaced with empty data
-    expect(repos.assets.getBySymbol('SPACEX')?.mintAddress).toBe(spacex.mintAddress)
+    expect((await repos.assets.getBySymbol('SPACEX'))?.mintAddress).toBe(spacex.mintAddress)
   })
 
   it('does not throw when an upstream reference is unavailable', async () => {

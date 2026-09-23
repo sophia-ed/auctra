@@ -100,6 +100,10 @@ dilute it.
 | 72 Demo data / DemoMode | `apps/web/src/components/data-mode-banner.tsx`, `DemoLifecycleProvider` seeds |
 | 73 Real data mode | `GET /api/status` (`LIVE` / `STALE` / `DEMO` / `UNCONFIGURED`) |
 | 74 Historical case study | `apps/web/src/app/case-studies/[symbol]/page.tsx` |
+| 80 E2E test | `tests/e2e/src/transition.e2e.test.ts` |
+| 81 Containerization | `Dockerfile`, `docker-compose.yml`, `.dockerignore` |
+| 103 Deployment (Docker VPS) | `docker-compose.yml` (web, api, worker, postgres) |
+| 104 CI | `.github/workflows/ci.yml` (install, lint, typecheck, test, build, docker) |
 | 89-91 Why Meteora / Pyth / PreStocks | `apps/web/src/app/why/meteora`, `why/pyth`, `why/prestocks` |
 | 45 Policy explanation | `packages/domain/src/policy/explanation.ts` |
 | 46 Policy JSON | `packages/domain/src/plan/serialize.ts` |

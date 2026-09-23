@@ -1,11 +1,12 @@
 import { loadConfig } from '@auctra/config'
-import { createInMemoryRepositories } from '@auctra/database'
+import { createInMemoryRepositories, createPostgresRepositories } from '@auctra/database'
 import {
   DemoLifecycleProvider,
   HttpPreStocksProvider,
   PreStocksLifecycleProvider,
 } from '@auctra/prestocks'
 import { HttpPythProvider } from '@auctra/pyth'
+import { Pool } from 'pg'
 import { AuctraWorker } from './worker'
 
 /**
@@ -16,7 +17,9 @@ import { AuctraWorker } from './worker'
  */
 export async function main(): Promise<void> {
   const config = loadConfig(process.env)
-  const repos = createInMemoryRepositories()
+  const repos = config.databaseUrl
+    ? createPostgresRepositories({ pool: new Pool({ connectionString: config.databaseUrl }) })
+    : createInMemoryRepositories()
 
   const prestocks = new HttpPreStocksProvider({ baseUrl: config.prestocksApiUrl })
   const lifecycle = config.demoMode

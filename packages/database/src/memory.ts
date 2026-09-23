@@ -24,46 +24,46 @@ import {
 
 class MemoryAssets implements AssetsRepository {
   private readonly byId = new Map<string, PreStockAssetRecord>()
-  upsert(record: PreStockAssetRecord) {
+  async upsert(record: PreStockAssetRecord) {
     this.byId.set(record.id, record)
   }
-  getBySymbol(symbol: string) {
+  async getBySymbol(symbol: string) {
     const wanted = symbol.toLowerCase()
     return [...this.byId.values()].find((record) => record.symbol.toLowerCase() === wanted)
   }
-  getById(id: string) {
+  async getById(id: string) {
     return this.byId.get(id)
   }
-  list() {
+  async list() {
     return [...this.byId.values()]
   }
 }
 
 class MemoryEvents implements EventsRepository {
   private readonly byId = new Map<string, LifecycleEventRecord>()
-  insert(record: LifecycleEventRecord) {
+  async insert(record: LifecycleEventRecord) {
     this.byId.set(record.id, record)
   }
-  get(id: string) {
+  async get(id: string) {
     return this.byId.get(id)
   }
-  listByAsset(assetId: string) {
+  async listByAsset(assetId: string) {
     return [...this.byId.values()].filter((record) => record.assetId === assetId)
   }
-  list() {
+  async list() {
     return [...this.byId.values()]
   }
 }
 
 class MemoryReferences implements ReferenceRepository {
   private readonly records: ReferenceObservationRecord[] = []
-  insert(record: ReferenceObservationRecord) {
+  async insert(record: ReferenceObservationRecord) {
     this.records.push(record)
   }
-  list() {
+  async list() {
     return [...this.records]
   }
-  listByAsset(symbol: string) {
+  async listByAsset(symbol: string) {
     return this.records.filter((record) => record.assetSymbol.toLowerCase() === symbol.toLowerCase())
   }
 }
@@ -72,7 +72,7 @@ class MemoryPlans implements PlansRepository {
   private readonly byId = new Map<string, TransitionPlanRecord>()
   private readonly versions = new Map<string, TransitionPlanVersionRecord[]>()
 
-  insert(record: TransitionPlanRecord) {
+  async insert(record: TransitionPlanRecord) {
     const existing = this.byId.get(record.id)
     if (existing) {
       if (existing.outputHash !== record.outputHash) {
@@ -99,29 +99,29 @@ class MemoryPlans implements PlansRepository {
     return this.versions.get(planId)?.length ?? 0
   }
 
-  get(id: string) {
+  async get(id: string) {
     return this.byId.get(id)
   }
-  listByAsset(assetId: string) {
+  async listByAsset(assetId: string) {
     return [...this.byId.values()].filter((record) => record.assetId === assetId)
   }
-  list() {
+  async list() {
     return [...this.byId.values()]
   }
-  listVersions(planId: string) {
+  async listVersions(planId: string) {
     return this.versions.get(planId) ?? []
   }
 }
 
 class MemorySources implements SourcesRepository {
   private readonly byId = new Map<string, SourceRecordRow>()
-  register(record: SourceRecordRow) {
+  async register(record: SourceRecordRow) {
     this.byId.set(record.id, record)
   }
-  get(id: string) {
+  async get(id: string) {
     return this.byId.get(id)
   }
-  list() {
+  async list() {
     return [...this.byId.values()]
   }
 }
@@ -129,12 +129,12 @@ class MemorySources implements SourcesRepository {
 class MemoryAudit implements AuditRepository {
   private readonly records: AuditEventRecord[] = []
   private nextId = 1
-  append(event: Omit<AuditEventRecord, 'id' | 'createdAt'>) {
+  async append(event: Omit<AuditEventRecord, 'id' | 'createdAt'>) {
     const record: AuditEventRecord = { ...event, id: this.nextId++, createdAt: new Date().toISOString() }
     this.records.push(record)
     return record
   }
-  list() {
+  async list() {
     return [...this.records]
   }
 }
@@ -142,32 +142,32 @@ class MemoryAudit implements AuditRepository {
 class MemoryPools implements PoolsRepository {
   private readonly byAddress = new Map<string, PoolRecord>()
   private readonly snapshots: PoolSnapshotRecord[] = []
-  upsert(pool: PoolRecord) {
+  async upsert(pool: PoolRecord) {
     this.byAddress.set(pool.address, pool)
   }
-  get(address: string) {
+  async get(address: string) {
     return this.byAddress.get(address)
   }
-  list() {
+  async list() {
     return [...this.byAddress.values()]
   }
-  addSnapshot(snapshot: PoolSnapshotRecord) {
+  async addSnapshot(snapshot: PoolSnapshotRecord) {
     this.snapshots.push(snapshot)
   }
-  listSnapshots(address: string) {
+  async listSnapshots(address: string) {
     return this.snapshots.filter((snapshot) => snapshot.poolAddress === address)
   }
 }
 
 class MemorySimulations implements SimulationsRepository {
   private readonly byId = new Map<string, SimulationRunRecord>()
-  insert(run: SimulationRunRecord) {
+  async insert(run: SimulationRunRecord) {
     this.byId.set(run.id, run)
   }
-  get(id: string) {
+  async get(id: string) {
     return this.byId.get(id)
   }
-  listByPlan(planId: string) {
+  async listByPlan(planId: string) {
     return [...this.byId.values()].filter((run) => run.planId === planId)
   }
 }

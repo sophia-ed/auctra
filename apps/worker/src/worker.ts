@@ -132,13 +132,13 @@ export class AuctraWorker {
       })
       if (loaded.stale) report.stale.push('prestocks')
       for (const asset of loaded.value.assets) {
-        const isNew = this.deps.repos.assets.getById(asset.id) === undefined
-        this.deps.repos.assets.upsert(toRecord(asset))
+        const isNew = await this.deps.repos.assets.getById(asset.id) === undefined
+        await this.deps.repos.assets.upsert(toRecord(asset))
         if (isNew) {
-          this.deps.repos.audit.append({ kind: 'asset_imported', assetId: asset.id, source: 'worker' })
+          await this.deps.repos.audit.append({ kind: 'asset_imported', assetId: asset.id, source: 'worker' })
         }
       }
-      this.deps.repos.sources.register({
+      await this.deps.repos.sources.register({
         id: loaded.value.source.id,
         sourceType: loaded.value.source.sourceType,
         url: loaded.value.source.url,
@@ -151,7 +151,7 @@ export class AuctraWorker {
       fail('prestocks', thrown)
     }
 
-    const assets = this.deps.repos.assets.list()
+    const assets = await this.deps.repos.assets.list()
 
     // 2. Event refresh.
     if (this.deps.lifecycle) {
@@ -159,8 +159,8 @@ export class AuctraWorker {
         try {
           const result = await this.deps.lifecycle.getEventsDetailed(toAsset(record))
           for (const event of result.events) {
-            if (this.deps.repos.events.get(event.id)) continue
-            this.deps.repos.events.insert({
+            if (await this.deps.repos.events.get(event.id)) continue
+            await this.deps.repos.events.insert({
               id: event.id,
               assetId: event.assetId,
               type: event.type,
@@ -176,10 +176,10 @@ export class AuctraWorker {
               createdAt: this.now(),
             })
             report.eventsAdded += 1
-            this.deps.repos.audit.append({ kind: 'event_added', assetId: event.assetId, source: 'worker' })
+            await this.deps.repos.audit.append({ kind: 'event_added', assetId: event.assetId, source: 'worker' })
           }
           for (const source of result.sources) {
-            this.deps.repos.sources.register({
+            await this.deps.repos.sources.register({
               id: source.id,
               sourceType: source.sourceType,
               url: source.url,
@@ -204,7 +204,7 @@ export class AuctraWorker {
             feedUpdateTimestamp: observation.feedUpdateTimestamp,
             publishTime: observation.publishTime,
           })
-          this.deps.repos.references.insert({
+          await this.deps.repos.references.insert({
             id: newId('ref'),
             assetSymbol: record.symbol,
             feedId: observation.feedId,
@@ -221,7 +221,7 @@ export class AuctraWorker {
             retrievedAt: this.now(),
           })
           report.referencesObserved += 1
-          this.deps.repos.audit.append({ kind: 'reference_observed', assetId: record.id, source: 'worker' })
+          await this.deps.repos.audit.append({ kind: 'reference_observed', assetId: record.id, source: 'worker' })
         } catch (thrown) {
           fail('pyth', thrown)
         }
@@ -230,11 +230,11 @@ export class AuctraWorker {
 
     // 4. Pool snapshots (read-only).
     if (this.deps.dbc) {
-      for (const pool of this.deps.repos.pools.list()) {
+      for (const pool of await this.deps.repos.pools.list()) {
         try {
           const state = await this.deps.dbc.getPool(pool.address)
           const migration = await this.deps.dbc.getMigrationStatus(pool.address)
-          this.deps.repos.pools.addSnapshot({
+          await this.deps.repos.pools.addSnapshot({
             poolAddress: pool.address,
             quoteReserve: state.quoteReserve,
             progress: String(state.progress),
@@ -253,7 +253,7 @@ export class AuctraWorker {
     for (const record of assets) {
       try {
         deriveLifecycleState(
-          this.deps.repos.events.listByAsset(record.id).map((event) => ({
+          (await this.deps.repos.events.listByAsset(record.id)).map((event) => ({
             id: event.id,
             assetId: event.assetId,
             type: event.type as LifecycleEventType,

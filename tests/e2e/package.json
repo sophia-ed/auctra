@@ -1,0 +1,22 @@
+{
+  "name": "@auctra/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auctra/domain": "workspace:*",
+    "@auctra/meteora": "workspace:*",
+    "@auctra/prestocks": "workspace:*",
+    "@auctra/pyth": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

@@ -1,0 +1,75 @@
+# Auctra deployment (AUCTRA.md Sections 81, 103).
+# Deploys to any Docker host. Mainnet remains gated by ENABLE_MAINNET.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: auctra
+      POSTGRES_PASSWORD: auctra
+      POSTGRES_DB: auctra
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./packages/database/sql/0001_init.sql:/docker-entrypoint-initdb.d/0001_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auctra"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+
+  api:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_SOLANA_NETWORK: ${NEXT_PUBLIC_SOLANA_NETWORK:-devnet}
+    command: pnpm --filter @auctra/api start
+    environment:
+      DATABASE_URL: postgres://auctra:auctra@postgres:5432/auctra
+      DEMO_MODE: ${DEMO_MODE:-true}
+      ENABLE_MAINNET: ${ENABLE_MAINNET:-false}
+      PRESTOCKS_API_URL: ${PRESTOCKS_API_URL:-https://prestocks.com/api/prestocks}
+      PYTH_HERMES_URL: ${PYTH_HERMES_URL:-https://hermes.pyth.network}
+      PYTH_API_KEY: ${PYTH_API_KEY:-}
+      PORT: "3001"
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+    command: pnpm --filter @auctra/worker start
+    environment:
+      DATABASE_URL: postgres://auctra:auctra@postgres:5432/auctra
+      DEMO_MODE: ${DEMO_MODE:-true}
+      PRESTOCKS_API_URL: ${PRESTOCKS_API_URL:-https://prestocks.com/api/prestocks}
+      PYTH_HERMES_URL: ${PYTH_HERMES_URL:-https://hermes.pyth.network}
+      PYTH_API_KEY: ${PYTH_API_KEY:-}
+      WORKER_INTERVAL_MS: ${WORKER_INTERVAL_MS:-60000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+        NEXT_PUBLIC_SOLANA_NETWORK: ${NEXT_PUBLIC_SOLANA_NETWORK:-devnet}
+    command: pnpm --filter @auctra/web start
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  pgdata:

@@ -23,3 +23,4 @@ export {
   PlanImmutabilityError,
 } from './repositories'
 export { createInMemoryRepositories, newId } from './memory'
+export { createPostgresRepositories, type PostgresRepositoriesOptions } from './postgres'

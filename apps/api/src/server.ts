@@ -208,14 +208,14 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
   })
 
   async function ensureAssets(): Promise<void> {
-    if (deps.repos.assets.list().length > 0) return
+    if ((await deps.repos.assets.list()).length > 0) return
     try {
       const detailed = await deps.prestocks.listAssetsDetailed()
       for (const asset of detailed.assets) {
-        deps.repos.assets.upsert(assetToRecord(asset))
-        deps.repos.audit.append({ kind: 'asset_imported', assetId: asset.id, source: 'prestocks' })
+        await deps.repos.assets.upsert(assetToRecord(asset))
+        await deps.repos.audit.append({ kind: 'asset_imported', assetId: asset.id, source: 'prestocks' })
       }
-      deps.repos.sources.register({
+      await deps.repos.sources.register({
         id: detailed.source.id,
         sourceType: detailed.source.sourceType,
         url: detailed.source.url,
@@ -231,7 +231,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
   }
 
   async function ensureEvents(asset: PreStockAssetRecord): Promise<LifecycleEvent[]> {
-    let events = deps.repos.events.listByAsset(asset.id)
+    let events = await deps.repos.events.listByAsset(asset.id)
     if (events.length === 0 && deps.lifecycle) {
       const result = await deps.lifecycle.getEventsDetailed({
         id: asset.id,
@@ -247,7 +247,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
         retrievedAt: asset.retrievedAt,
       })
       for (const event of result.events) {
-        deps.repos.events.insert({
+        await deps.repos.events.insert({
           id: event.id,
           assetId: event.assetId,
           type: event.type,
@@ -262,9 +262,9 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
           notes: event.notes,
           createdAt: now(),
         })
-        deps.repos.audit.append({ kind: 'event_added', assetId: event.assetId, source: event.sourceType })
+        await deps.repos.audit.append({ kind: 'event_added', assetId: event.assetId, source: event.sourceType })
       }
-      events = deps.repos.events.listByAsset(asset.id)
+      events = await deps.repos.events.listByAsset(asset.id)
     }
     return events.map(toLifecycleEvent)
   }
@@ -298,20 +298,20 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
       solana: { status: deps.config.solanaRpcUrl ? 'LIVE' : 'UNCONFIGURED', lastCheckedAt: undefined },
       meteora: { status: deps.dbc ? 'LIVE' : 'UNCONFIGURED', lastCheckedAt: undefined },
     },
-    assets: deps.repos.assets.list().length,
-    pools: deps.repos.pools.list().length,
+    assets: (await deps.repos.assets.list()).length,
+    pools: (await deps.repos.pools.list()).length,
   }))
 
   // --- assets ---------------------------------------------------------------
 
   app.get('/api/assets', async () => {
     await ensureAssets()
-    return { assets: deps.repos.assets.list() }
+    return { assets: await deps.repos.assets.list() }
   })
 
   app.get<{ Params: { symbol: string } }>('/api/assets/:symbol', async (request, reply) => {
     await ensureAssets()
-    const asset = deps.repos.assets.getBySymbol(request.params.symbol)
+    const asset = await deps.repos.assets.getBySymbol(request.params.symbol)
     if (!asset) return reply.code(404).send({ error: 'asset_not_found' })
     return { asset }
   })
@@ -320,7 +320,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
 
   app.get('/api/events', async (request) => {
     const assetId = (request.query as { assetId?: string }).assetId
-    return { events: assetId ? deps.repos.events.listByAsset(assetId) : deps.repos.events.list() }
+    return { events: assetId ? await deps.repos.events.listByAsset(assetId) : await deps.repos.events.list() }
   })
 
   app.post('/api/events', async (request, reply) => {
@@ -329,12 +329,12 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
       return reply.code(400).send({ error: 'validation_failed', issues: parsed.error.issues })
     }
     const event = parsed.data
-    deps.repos.events.insert({
+    await deps.repos.events.insert({
       ...event,
       confidence: String(event.confidence),
       createdAt: now(),
     })
-    deps.repos.audit.append({ kind: 'event_added', assetId: event.assetId, source: event.sourceType })
+    await deps.repos.audit.append({ kind: 'event_added', assetId: event.assetId, source: event.sourceType })
     return reply.code(201).send({ event })
   })
 
@@ -350,7 +350,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
         publishTime: observation.publishTime,
       })
       const referenceState = toReferenceState(observation, freshness)
-      deps.repos.references.insert({
+      await deps.repos.references.insert({
         id: newId('ref'),
         assetSymbol: request.params.asset.toUpperCase(),
         feedId: observation.feedId,
@@ -366,7 +366,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
         source: 'pyth',
         retrievedAt: now(),
       })
-      deps.repos.audit.append({ kind: 'reference_observed', assetId: request.params.asset, source: 'pyth' })
+      await deps.repos.audit.append({ kind: 'reference_observed', assetId: request.params.asset, source: 'pyth' })
       recordProvider('pyth', true)
       return { observation: toJsonValue(observation), referenceState: toJsonValue(referenceState) }
     } catch (error) {
@@ -385,7 +385,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
 
   app.get<{ Params: { symbol: string } }>('/api/lifecycle/:symbol', async (request, reply) => {
     await ensureAssets()
-    const asset = deps.repos.assets.getBySymbol(request.params.symbol)
+    const asset = await deps.repos.assets.getBySymbol(request.params.symbol)
     if (!asset) return reply.code(404).send({ error: 'asset_not_found' })
 
     const events = await ensureEvents(asset)
@@ -407,7 +407,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
 
   app.get<{ Params: { symbol: string } }>('/api/clocks/:symbol', async (request, reply) => {
     await ensureAssets()
-    const asset = deps.repos.assets.getBySymbol(request.params.symbol)
+    const asset = await deps.repos.assets.getBySymbol(request.params.symbol)
     if (!asset) return reply.code(404).send({ error: 'asset_not_found' })
 
     const events = await ensureEvents(asset)
@@ -445,10 +445,10 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
   app.get('/api/audit', async () => {
     await ensureAssets()
     return {
-      assets: deps.repos.assets.list(),
-      sources: deps.repos.sources.list(),
-      events: deps.repos.events.list(),
-      observations: deps.repos.references.list(),
+      assets: await deps.repos.assets.list(),
+      sources: await deps.repos.sources.list(),
+      events: await deps.repos.events.list(),
+      observations: await deps.repos.references.list(),
     }
   })
 
@@ -457,7 +457,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     const asOf = now()
     const rows: Array<Record<string, unknown>> = []
 
-    for (const asset of deps.repos.assets.list()) {
+    for (const asset of await deps.repos.assets.list()) {
       const events = await ensureEvents(asset)
       const state = deriveLifecycleState(events, asOf)
 
@@ -495,13 +495,14 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
       })
     }
 
-    return {
-      asOf,
-      assets: rows,
-      pools: deps.repos.pools
-        .list()
-        .map((pool) => ({ ...pool, snapshots: deps.repos.pools.listSnapshots(pool.address) })),
-    }
+    const pools = await deps.repos.pools.list()
+    const poolsWithSnapshots = await Promise.all(
+      pools.map(async (pool) => ({
+        ...pool,
+        snapshots: await deps.repos.pools.listSnapshots(pool.address),
+      })),
+    )
+    return { asOf, assets: rows, pools: poolsWithSnapshots }
   })
 
   // --- transitions ----------------------------------------------------------
@@ -513,7 +514,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     }
     const body = parsed.data
     await ensureAssets()
-    const asset = deps.repos.assets.getBySymbol(body.symbol)
+    const asset = await deps.repos.assets.getBySymbol(body.symbol)
     if (!asset) return reply.code(404).send({ error: 'asset_not_found' })
 
     const events = await ensureEvents(asset)
@@ -600,7 +601,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
       tokenType: 'Token2022',
     })
 
-    deps.repos.plans.insert({
+    await deps.repos.plans.insert({
       id: plan.id,
       assetId: asset.id,
       state: plan.currentState,
@@ -611,7 +612,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
       payload: plan,
       createdAt: asOf,
     })
-    deps.repos.audit.append({ kind: 'policy_compiled', assetId: asset.id, planId: plan.id })
+    await deps.repos.audit.append({ kind: 'policy_compiled', assetId: asset.id, planId: plan.id })
 
     const dossier = buildTransitionDossier({
       plan,
@@ -635,13 +636,16 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
   })
 
   app.get<{ Params: { id: string } }>('/api/transition/:id', async (request, reply) => {
-    const record = deps.repos.plans.get(request.params.id)
+    const record = await deps.repos.plans.get(request.params.id)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
+    const versions = await deps.repos.plans.listVersions(record.id)
     return {
       plan: toJsonValue(record.payload),
-      versions: deps.repos.plans
-        .listVersions(record.id)
-        .map((version) => ({ version: version.version, inputHash: version.inputHash, outputHash: version.outputHash })),
+      versions: versions.map((version) => ({
+        version: version.version,
+        inputHash: version.inputHash,
+        outputHash: version.outputHash,
+      })),
     }
   })
 
@@ -652,7 +656,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     if (!parsed.success) {
       return reply.code(400).send({ error: 'validation_failed', issues: parsed.error.issues })
     }
-    const record = deps.repos.plans.get(parsed.data.planId)
+    const record = await deps.repos.plans.get(parsed.data.planId)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
 
     const plan = record.payload as TransitionPlan
@@ -666,19 +670,19 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
       scenario: parsed.data.scenario,
     })
     const simulationId = newId('sim')
-    deps.repos.simulations.insert({
+    await deps.repos.simulations.insert({
       id: simulationId,
       planId: plan.id,
       scenario: parsed.data.scenario,
       payload: simulationPlan,
       createdAt: now(),
     })
-    deps.repos.audit.append({ kind: 'simulation_executed', planId: plan.id, metadata: { simulationId } })
+    await deps.repos.audit.append({ kind: 'simulation_executed', planId: plan.id, metadata: { simulationId } })
     return reply.code(201).send({ simulationId, simulation: toJsonValue(simulationPlan) })
   })
 
   app.get<{ Params: { id: string } }>('/api/simulations/:id', async (request, reply) => {
-    const record = deps.repos.simulations.get(request.params.id)
+    const record = await deps.repos.simulations.get(request.params.id)
     if (!record) return reply.code(404).send({ error: 'simulation_not_found' })
     return { simulation: toJsonValue(record.payload) }
   })
@@ -689,7 +693,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     const parsed = dbcValidateRequestSchema.safeParse(request.body)
     if (!parsed.success) return reply.code(400).send({ error: 'validation_failed', issues: parsed.error.issues })
     if (!deps.dbc) return reply.code(503).send({ error: 'meteora_sdk_unavailable' })
-    const record = deps.repos.plans.get(parsed.data.planId)
+    const record = await deps.repos.plans.get(parsed.data.planId)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
     const plan = record.payload as TransitionPlan
     const issues = deps.dbc.validateConfig(plan.dbcPlan)
@@ -701,7 +705,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     if (!parsed.success) return reply.code(400).send({ error: 'validation_failed', issues: parsed.error.issues })
     if (!deps.dbc) return reply.code(503).send({ error: 'meteora_sdk_unavailable' })
     const body = parsed.data
-    const record = deps.repos.plans.get(body.planId)
+    const record = await deps.repos.plans.get(body.planId)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
     const plan = record.payload as TransitionPlan
 
@@ -715,7 +719,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
       feeClaimer: body.feeClaimer,
       leftoverReceiver: body.leftoverReceiver,
     })
-    deps.repos.audit.append({
+    await deps.repos.audit.append({
       kind: 'configuration_prepared',
       planId: plan.id,
       metadata: { payer: body.payer, config: body.config },
@@ -791,16 +795,22 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
 
   // --- pools ----------------------------------------------------------------
 
-  app.get('/api/pools', async () => ({
-    pools: deps.repos.pools
-      .list()
-      .map((pool) => ({ ...pool, snapshots: deps.repos.pools.listSnapshots(pool.address) })),
-  }))
+  app.get('/api/pools', async () => {
+    const pools = await deps.repos.pools.list()
+    return {
+      pools: await Promise.all(
+        pools.map(async (pool) => ({
+          ...pool,
+          snapshots: await deps.repos.pools.listSnapshots(pool.address),
+        })),
+      ),
+    }
+  })
 
   app.get<{ Params: { address: string } }>('/api/pools/:address', async (request, reply) => {
-    const pool = deps.repos.pools.get(request.params.address)
+    const pool = await deps.repos.pools.get(request.params.address)
     if (pool) {
-      return { pool, snapshots: deps.repos.pools.listSnapshots(pool.address) }
+      return { pool, snapshots: await deps.repos.pools.listSnapshots(pool.address) }
     }
     if (!deps.dbc) return reply.code(404).send({ error: 'pool_not_found' })
     try {

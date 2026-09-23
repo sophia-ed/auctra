@@ -26,13 +26,26 @@ built yet.
 | `@auctra/pyth` — reference model, freshness, feed registry, discovery | done (12 tests) |
 | `@auctra/meteora` — DBC adapter, validation, migration status, version guard | done (15 tests) |
 | `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
-| `@auctra/database` — Postgres schema + repository layer | done (6 tests) |
+| `@auctra/database` — Postgres schema, in-memory + pg repositories | done (10 tests) |
 | `@auctra/cache` — TTL cache with graceful degradation | done (4 tests) |
 | `@auctra/api` — typed backend (Section 58 routes, status) | done (16 tests) |
 | `@auctra/web` — Next.js app | 15 routes incl. DBC lab, audit, monitor, pools, case studies, demo; Solana wallet (devnet-safe) |
 | `@auctra/worker` — background refresh (read-only) | done (4 tests) |
+| `tests/e2e` — one complete pipeline test | done (1 test) |
+| Docker — `Dockerfile`, `docker-compose.yml` | image builds and the API container responds |
 
-138 tests, clean typecheck across all packages.
+143 tests, clean typecheck across all packages.
+
+## Deployment (Docker VPS)
+
+```bash
+docker compose up --build
+# web   http://localhost:3000
+# api   http://localhost:3001/api/health
+```
+
+Postgres, the API, the worker and the web app run as separate services. Mainnet
+remains gated: it is only selectable when `ENABLE_MAINNET=true` is set explicitly.
 
 ### Running the API
 

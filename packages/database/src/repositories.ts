@@ -1,7 +1,9 @@
 /**
  * Persistence entities and repository contracts (AUCTRA.md Section 48).
- * Repositories are interfaces so the API can run against PostgreSQL in
- * production and an in-memory implementation in tests.
+ *
+ * Repositories are async so the API and worker can run against either the
+ * in-memory implementation (tests, demo) or PostgreSQL (deployment) without
+ * changing call sites.
  */
 
 export type AuditKind =
@@ -139,57 +141,57 @@ export class PlanImmutabilityError extends Error {
 }
 
 export interface AssetsRepository {
-  upsert(record: PreStockAssetRecord): void
-  getBySymbol(symbol: string): PreStockAssetRecord | undefined
-  getById(id: string): PreStockAssetRecord | undefined
-  list(): PreStockAssetRecord[]
+  upsert(record: PreStockAssetRecord): Promise<void>
+  getBySymbol(symbol: string): Promise<PreStockAssetRecord | undefined>
+  getById(id: string): Promise<PreStockAssetRecord | undefined>
+  list(): Promise<PreStockAssetRecord[]>
 }
 
 export interface EventsRepository {
-  insert(record: LifecycleEventRecord): void
-  get(id: string): LifecycleEventRecord | undefined
-  listByAsset(assetId: string): LifecycleEventRecord[]
-  list(): LifecycleEventRecord[]
+  insert(record: LifecycleEventRecord): Promise<void>
+  get(id: string): Promise<LifecycleEventRecord | undefined>
+  listByAsset(assetId: string): Promise<LifecycleEventRecord[]>
+  list(): Promise<LifecycleEventRecord[]>
 }
 
 export interface ReferenceRepository {
-  insert(record: ReferenceObservationRecord): void
-  list(): ReferenceObservationRecord[]
-  listByAsset(symbol: string): ReferenceObservationRecord[]
+  insert(record: ReferenceObservationRecord): Promise<void>
+  list(): Promise<ReferenceObservationRecord[]>
+  listByAsset(symbol: string): Promise<ReferenceObservationRecord[]>
 }
 
 export interface PlansRepository {
   /** Append-only. Returns whether the id was newly created (idempotent otherwise). */
-  insert(record: TransitionPlanRecord): { record: TransitionPlanRecord; created: boolean; version: number }
-  get(id: string): TransitionPlanRecord | undefined
-  listByAsset(assetId: string): TransitionPlanRecord[]
-  list(): TransitionPlanRecord[]
-  listVersions(planId: string): TransitionPlanVersionRecord[]
+  insert(record: TransitionPlanRecord): Promise<{ record: TransitionPlanRecord; created: boolean; version: number }>
+  get(id: string): Promise<TransitionPlanRecord | undefined>
+  listByAsset(assetId: string): Promise<TransitionPlanRecord[]>
+  list(): Promise<TransitionPlanRecord[]>
+  listVersions(planId: string): Promise<TransitionPlanVersionRecord[]>
 }
 
 export interface SourcesRepository {
-  register(record: SourceRecordRow): void
-  get(id: string): SourceRecordRow | undefined
-  list(): SourceRecordRow[]
+  register(record: SourceRecordRow): Promise<void>
+  get(id: string): Promise<SourceRecordRow | undefined>
+  list(): Promise<SourceRecordRow[]>
 }
 
 export interface AuditRepository {
-  append(event: Omit<AuditEventRecord, 'id' | 'createdAt'>): AuditEventRecord
-  list(): AuditEventRecord[]
+  append(event: Omit<AuditEventRecord, 'id' | 'createdAt'>): Promise<AuditEventRecord>
+  list(): Promise<AuditEventRecord[]>
 }
 
 export interface PoolsRepository {
-  upsert(pool: PoolRecord): void
-  get(address: string): PoolRecord | undefined
-  list(): PoolRecord[]
-  addSnapshot(snapshot: PoolSnapshotRecord): void
-  listSnapshots(address: string): PoolSnapshotRecord[]
+  upsert(pool: PoolRecord): Promise<void>
+  get(address: string): Promise<PoolRecord | undefined>
+  list(): Promise<PoolRecord[]>
+  addSnapshot(snapshot: PoolSnapshotRecord): Promise<void>
+  listSnapshots(address: string): Promise<PoolSnapshotRecord[]>
 }
 
 export interface SimulationsRepository {
-  insert(run: SimulationRunRecord): void
-  get(id: string): SimulationRunRecord | undefined
-  listByPlan(planId: string): SimulationRunRecord[]
+  insert(run: SimulationRunRecord): Promise<void>
+  get(id: string): Promise<SimulationRunRecord | undefined>
+  listByPlan(planId: string): Promise<SimulationRunRecord[]>
 }
 
 export interface Repositories {

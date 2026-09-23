@@ -1,12 +1,16 @@
 import { loadConfig } from '@auctra/config'
-import { createInMemoryRepositories } from '@auctra/database'
+import { createInMemoryRepositories, createPostgresRepositories } from '@auctra/database'
 import { DemoLifecycleProvider, HttpPreStocksProvider, PreStocksLifecycleProvider } from '@auctra/prestocks'
 import { HttpPythProvider } from '@auctra/pyth'
+import { Pool } from 'pg'
 import { createApiServer } from './server'
 
 export async function main(): Promise<void> {
   const config = loadConfig(process.env)
-  const repos = createInMemoryRepositories()
+  // PostgreSQL in deployment; in-memory for demo mode or when DATABASE_URL is unset.
+  const repos = config.databaseUrl
+    ? createPostgresRepositories({ pool: new Pool({ connectionString: config.databaseUrl }) })
+    : createInMemoryRepositories()
 
   const prestocks = new HttpPreStocksProvider({ baseUrl: config.prestocksApiUrl })
   const pyth = new HttpPythProvider({ baseUrl: config.pythHermesUrl })

@@ -22,30 +22,30 @@ function planRecord(overrides: Partial<TransitionPlanRecord> = {}): TransitionPl
 }
 
 describe('repositories (Section 48)', () => {
-  it('treats plans as append-only and idempotent', () => {
+  it('treats plans as append-only and idempotent', async () => {
     const repos = createInMemoryRepositories()
-    const first = repos.plans.insert(planRecord())
+    const first = await repos.plans.insert(planRecord())
     expect(first.created).toBe(true)
     expect(first.version).toBe(1)
 
-    const again = repos.plans.insert(planRecord())
+    const again = await repos.plans.insert(planRecord())
     expect(again.created).toBe(false)
     expect(again.version).toBe(1)
 
-    expect(repos.plans.listVersions('tp_abc')).toHaveLength(1)
+    expect(await repos.plans.listVersions('tp_abc')).toHaveLength(1)
   })
 
-  it('refuses to overwrite a plan with different content', () => {
+  it('refuses to overwrite a plan with different content', async () => {
     const repos = createInMemoryRepositories()
-    repos.plans.insert(planRecord())
-    expect(() => repos.plans.insert(planRecord({ outputHash: 'different' }))).toThrowError(
+    await repos.plans.insert(planRecord())
+    await expect(repos.plans.insert(planRecord({ outputHash: 'different' }))).rejects.toThrowError(
       PlanImmutabilityError,
     )
   })
 
-  it('stores events by asset and assets by symbol', () => {
+  it('stores events by asset and assets by symbol', async () => {
     const repos = createInMemoryRepositories()
-    repos.assets.upsert({
+    await repos.assets.upsert({
       id: 'spacex',
       symbol: 'SPACEX',
       name: 'SpaceX PreStocks',
@@ -58,7 +58,7 @@ describe('repositories (Section 48)', () => {
       source: 'prestocks',
       retrievedAt: '2026-09-23T00:00:00Z',
     })
-    repos.events.insert({
+    await repos.events.insert({
       id: 'ev-1',
       assetId: 'spacex',
       type: 'IPO',
@@ -68,36 +68,36 @@ describe('repositories (Section 48)', () => {
       confidence: '0.6',
       createdAt: '2026-09-23T00:00:00Z',
     })
-    expect(repos.assets.getBySymbol('spacex')?.mintAddress).toBe('PreANxu')
-    expect(repos.events.listByAsset('spacex')).toHaveLength(1)
+    expect((await repos.assets.getBySymbol('spacex'))?.mintAddress).toBe('PreANxu')
+    expect(await repos.events.listByAsset('spacex')).toHaveLength(1)
   })
 
-  it('records an append-only audit trail', () => {
+  it('records an append-only audit trail', async () => {
     const repos = createInMemoryRepositories()
-    repos.audit.append({ kind: 'asset_imported', assetId: 'spacex' })
-    repos.audit.append({ kind: 'policy_compiled', planId: 'tp_abc' })
-    const events = repos.audit.list()
+    await repos.audit.append({ kind: 'asset_imported', assetId: 'spacex' })
+    await repos.audit.append({ kind: 'policy_compiled', planId: 'tp_abc' })
+    const events = await repos.audit.list()
     expect(events.map((event) => event.kind)).toEqual(['asset_imported', 'policy_compiled'])
     expect(events[0].id).toBeLessThan(events[1].id)
   })
 
-  it('tracks pools and their snapshots', () => {
+  it('tracks pools and their snapshots', async () => {
     const repos = createInMemoryRepositories()
-    repos.pools.upsert({
+    await repos.pools.upsert({
       address: 'POOL',
       config: 'CONFIG',
       baseMint: 'BASE',
       quoteMint: 'QUOTE',
       createdAt: '2026-09-23T00:00:00Z',
     })
-    repos.pools.addSnapshot({
+    await repos.pools.addSnapshot({
       poolAddress: 'POOL',
       quoteReserve: '40000',
       progress: '0.4',
       migrationReady: false,
       observedAt: '2026-09-23T00:00:00Z',
     })
-    expect(repos.pools.listSnapshots('POOL')).toHaveLength(1)
+    expect(await repos.pools.listSnapshots('POOL')).toHaveLength(1)
   })
 
   it('generates unique ids', () => {
