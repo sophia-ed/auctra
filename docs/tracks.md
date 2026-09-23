@@ -104,6 +104,16 @@ dilute it.
 | 81 Containerization | `Dockerfile`, `docker-compose.yml`, `.dockerignore` |
 | 103 Deployment (Docker VPS) | `docker-compose.yml` (web, api, worker, postgres) |
 | 104 CI | `.github/workflows/ci.yml` (install, lint, typecheck, test, build, docker) |
+| 86 Documentation | `docs/` (product, architecture, lifecycle, transition, curve, pyth, meteora, simulation, provenance, security, limitations, demo-script) |
+| 87 Technical paper | `docs/technical-paper.md` |
+| 88 Architecture diagram | `docs/architecture.md` |
+| 92 Post-hackathon product | `docs/product.md` |
+| 93 Submission description | `HACKATHON_SUBMISSION.md` |
+| 94 Three-sentence pitch | `docs/demo-script.md`, `HACKATHON_SUBMISSION.md` |
+| 95 60-second demo script | `docs/demo-script.md` |
+| 96 Design language | `apps/web/src/app/globals.css`, `docs/product.md` |
+| 97-98 Language discipline | `scripts/lint-language.mjs`, `docs/product.md` |
+| 99-102 Performance, accessibility, mobile | `apps/web` (server components, SVG charts, responsive layout), `docs/product.md` |
 | 89-91 Why Meteora / Pyth / PreStocks | `apps/web/src/app/why/meteora`, `why/pyth`, `why/prestocks` |
 | 45 Policy explanation | `packages/domain/src/policy/explanation.ts` |
 | 46 Policy JSON | `packages/domain/src/plan/serialize.ts` |

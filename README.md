@@ -102,6 +102,28 @@ scripts/
 Frontend code must never be imported into domain packages (AUCTRA.md §61). The
 domain packages here have no React, Next.js, or wallet dependencies.
 
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [`docs/product.md`](./docs/product.md) | What Auctra is and is not |
+| [`docs/architecture.md`](./docs/architecture.md) | System diagram, layout, dependency direction |
+| [`docs/lifecycle-engine.md`](./docs/lifecycle-engine.md) | States, derivation rules, providers |
+| [`docs/transition-model.md`](./docs/transition-model.md) | Premium, conversion, gap, plan, reproducibility |
+| [`docs/transition-curve.md`](./docs/transition-curve.md) | Curve mathematics, intensity, fees, activation |
+| [`docs/pyth.md`](./docs/pyth.md) | Reference model, freshness, sessions, feed registry |
+| [`docs/meteora.md`](./docs/meteora.md) | Adapter surface, enums, migration, version safety |
+| [`docs/simulation.md`](./docs/simulation.md) | Model, scenarios, baseline comparison, replay |
+| [`docs/data-provenance.md`](./docs/data-provenance.md) | Sources, hashes, provenance classes, audit trail |
+| [`docs/security.md`](./docs/security.md) | Network gating, wallet-only signing, validation |
+| [`docs/limitations.md`](./docs/limitations.md) | Everything that is not done or not verified |
+| [`docs/originality.md`](./docs/originality.md) | Prior-art audit |
+| [`docs/technical-paper.md`](./docs/technical-paper.md) | The model, with equations |
+| [`docs/demo-script.md`](./docs/demo-script.md) | 60-second script, pitch, judge walkthrough |
+| [`docs/sdk-versions.md`](./docs/sdk-versions.md) | Pinned versions and verification |
+| [`docs/tracks.md`](./docs/tracks.md) | Track map and section-to-code index |
+| [`HACKATHON_SUBMISSION.md`](./HACKATHON_SUBMISSION.md) | Submission description |
+
 ## Provenance
 
 Every externally sourced fact carries `source`, `retrievedAt`, and `sourceType`.
