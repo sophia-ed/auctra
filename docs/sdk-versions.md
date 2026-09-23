@@ -21,6 +21,24 @@ No application code has been written yet. This file records the versions the sca
 | `node` | ≥ 20.9 (target 20 LTS or 22 LTS) | — | No version pinned by a dependency; choose at scaffold. |
 | package manager | `pnpm` | AUCTRA.md Section 59 | Use pnpm unless the repo already standardizes elsewhere. |
 
+### 1a. Frontend stack (Section 59)
+
+Pinned 2026-09-23 from the npm registry (`npm view <pkg> version`):
+
+| Dependency | Version | Notes |
+|---|---|---|
+| `next` | 16.3.6 | App Router, Turbopack production build |
+| `react` / `react-dom` | 19.3.0 | Next 16 peer range is `^18.2.0 || ^19.0.0` |
+| `tailwindcss` | 4.3.3 | v4: CSS-first, no `tailwind.config.js` required |
+| `@tailwindcss/postcss` | 4.3.3 | required PostCSS plugin for Tailwind v4 |
+| `postcss` | 8.5.28 | |
+| `typescript` | ^5.6.0 | |
+| `@types/react` / `@types/react-dom` | 19.3.0 | |
+
+Tailwind v4 setup used here (per the official Next.js guide): install
+`tailwindcss @tailwindcss/postcss postcss`, add `"@tailwindcss/postcss": {}` to
+`postcss.config.mjs`, and `@import "tailwindcss";` in `globals.css`.
+
 ## 2. External data sources (not semver — pin the contract + a content hash)
 
 | Source | Endpoint | Access | Contract to validate |

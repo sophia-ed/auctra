@@ -28,7 +28,8 @@ built yet.
 | `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
 | `@auctra/database` — Postgres schema + repository layer | done (6 tests) |
 | `@auctra/api` — typed backend (Section 58 routes) | done (10 tests) |
-| `apps/web`, `apps/worker` | not started |
+| `@auctra/web` — Next.js app | started (foundation + landing page) |
+| `apps/worker` | not started |
 
 124 tests, clean typecheck across all packages.
 
