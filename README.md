@@ -28,9 +28,8 @@ built yet.
 | `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
 | `@auctra/database` — Postgres schema + repository layer | done (6 tests) |
 | `@auctra/api` — typed backend (Section 58 routes) | done (15 tests) |
-| `@auctra/web` — Next.js app | asset/transition/builder, audit, monitor, DBC lab, pools, case studies, why pages |
-| `apps/worker` | not started |
-| Wallet (§57), demo (§71) | not started (Bit 3b) |
+| `@auctra/web` — Next.js app | 15 routes incl. DBC lab, audit, monitor, pools, case studies, demo; Solana wallet (devnet-safe) |
+| `apps/worker` | not started (Bit 4) |
 
 129 tests, clean typecheck across all packages.
 

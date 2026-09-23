@@ -309,6 +309,12 @@ export interface HealthResponse {
   pyth: string
 }
 
+export interface NetworkConfigResponse {
+  network: string
+  enableMainnet: boolean
+  demoMode: boolean
+}
+
 export interface PoolResponse {
   pool: Record<string, unknown>
   snapshots?: unknown[]
@@ -436,4 +442,24 @@ export interface LabRequest {
   migrationQuoteThreshold: string
   quoteMint: string
   scenario?: string
+}
+
+export interface DbcPrepareRequest {
+  planId: string
+  payer: string
+  config: string
+  feeClaimer: string
+  leftoverReceiver: string
+  tokenDecimal: number
+  initialMarketCap: string
+  migrationMarketCap: string
+}
+
+export interface DbcPrepareResponse {
+  unsignedTransaction: string
+  blockhash?: string
+  lastValidBlockHeight?: number
+  requiresWalletSignature: boolean
+  network: string
+  note: string
 }

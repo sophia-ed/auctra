@@ -93,7 +93,8 @@ dilute it.
 | 51 Live monitor | `apps/web/src/app/monitor/page.tsx`, `GET /api/monitor` |
 | 54 DBC curve lab | `apps/web/src/app/dbc-lab/page.tsx`, `POST /api/dbc/lab` |
 | 56 Explorer | `apps/web/src/app/pools/[address]/page.tsx`, `GET /api/pools/:address` |
-| 57 Wallet | not started (Bit 3b) |
+| 57 Wallet | `apps/web/src/components/wallet/` (`wallet-providers.tsx`, `wallet-button.tsx`, `deployment-panel.tsx`) |
+| 71 Demo page | `apps/web/src/app/demo/page.tsx` |
 | 74 Historical case study | `apps/web/src/app/case-studies/[symbol]/page.tsx` |
 | 89-91 Why Meteora / Pyth / PreStocks | `apps/web/src/app/why/meteora`, `why/pyth`, `why/prestocks` |
 | 45 Policy explanation | `packages/domain/src/policy/explanation.ts` |

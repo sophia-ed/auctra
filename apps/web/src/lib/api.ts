@@ -3,11 +3,14 @@ import type {
   AuditResponse,
   ClockModelJson,
   CompileResponse,
+  DbcPrepareRequest,
+  DbcPrepareResponse,
   HealthResponse,
   LabRequest,
   LabResponse,
   LifecycleResponse,
   MonitorResponse,
+  NetworkConfigResponse,
   PoolJson,
   PoolResponse,
   ReferenceResponse,
@@ -70,6 +73,7 @@ export interface CompileRequest {
 
 export const api = {
   health: () => request<HealthResponse>('/api/health'),
+  config: () => request<NetworkConfigResponse>('/api/config'),
   listAssets: () => request<{ assets: AssetRecord[] }>('/api/assets'),
   getAsset: (symbol: string) =>
     request<{ asset: AssetRecord }>(`/api/assets/${encodeURIComponent(symbol)}`),
@@ -99,6 +103,8 @@ export const api = {
   monitor: () => request<MonitorResponse>('/api/monitor'),
   dbcLab: (body: LabRequest) =>
     request<LabResponse>('/api/dbc/lab', { method: 'POST', body: JSON.stringify(body) }),
+  dbcPrepare: (body: DbcPrepareRequest) =>
+    request<DbcPrepareResponse>('/api/dbc/prepare', { method: 'POST', body: JSON.stringify(body) }),
 }
 
 export { API_BASE }

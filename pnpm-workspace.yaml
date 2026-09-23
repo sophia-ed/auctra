@@ -3,7 +3,9 @@ packages:
   - "apps/*"
 
 allowBuilds:
+  bufferutil: true
   esbuild: true
+  utf-8-validate: true
 
 minimumReleaseAgeExclude:
   - '@next/env@16.3.6'

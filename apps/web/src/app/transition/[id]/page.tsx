@@ -5,6 +5,7 @@ import { CurveChart } from '@/components/curve-chart'
 import { RunSimulation } from '@/components/run-simulation'
 import { DataRow, EmptyNote, Section } from '@/components/section'
 import { StatusBadge } from '@/components/status-badge'
+import { DeploymentPanel } from '@/components/wallet/deployment-panel'
 import { api } from '@/lib/api'
 import { formatBps, formatNumber, shortAddress } from '@/lib/format'
 import type { ExplanationJson } from '@/lib/types'
@@ -43,9 +44,14 @@ export default async function TransitionPage({ params }: { params: Promise<{ id:
 
   const { plan, versions } = result.data
   const symbol = plan.sourceAsset.symbol
-  const [lifecycleResult, clocksResult] = await Promise.all([api.lifecycle(symbol), api.clocks(symbol)])
+  const [lifecycleResult, clocksResult, configResult] = await Promise.all([
+    api.lifecycle(symbol),
+    api.clocks(symbol),
+    api.config(),
+  ])
   const lifecycle = lifecycleResult.ok ? lifecycleResult.data : null
   const clocks = clocksResult.ok ? clocksResult.data : null
+  const network = configResult.ok ? configResult.data.network : 'DEMO'
 
   const dbc = plan.dbcPlan
   const gap = plan.transitionGap
@@ -254,6 +260,10 @@ export default async function TransitionPage({ params }: { params: Promise<{ id:
 
       <Section id="simulation" title="Simulation">
         <RunSimulation planId={plan.id} />
+      </Section>
+
+      <Section id="deployment" title="Deployment">
+        <DeploymentPanel planId={plan.id} network={network} />
       </Section>
 
       <Section id="sources" title="Sources">

@@ -259,6 +259,13 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     pyth: deps.config.pythApiKey ? 'ok' : 'unconfigured',
   }))
 
+  // Non-secret runtime configuration for the UI (network gating, Section 34).
+  app.get('/api/config', async () => ({
+    network: deps.config.network,
+    enableMainnet: deps.config.enableMainnet,
+    demoMode: deps.config.demoMode,
+  }))
+
   // --- assets ---------------------------------------------------------------
 
   app.get('/api/assets', async () => {
@@ -677,6 +684,8 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     })
     return {
       unsignedTransaction: unsigned.transaction,
+      blockhash: unsigned.blockhash,
+      lastValidBlockHeight: unsigned.lastValidBlockHeight,
       requiresWalletSignature: true,
       network: deps.config.network,
       note: 'unsigned: the browser wallet signs and submits; Auctra never submits automatically',

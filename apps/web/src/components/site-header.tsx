@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { WalletButton } from './wallet/wallet-button'
 
 const REPO_URL = 'https://github.com/sophia-ed/auctra'
 
@@ -34,6 +35,9 @@ export function SiteHeader() {
           <Link href="/audit" className="no-underline" style={{ color: 'var(--muted)' }}>
             Audit
           </Link>
+          <Link href="/demo" className="no-underline" style={{ color: 'var(--muted)' }}>
+            Demo
+          </Link>
           <a
             href={REPO_URL}
             className="no-underline"
@@ -43,6 +47,7 @@ export function SiteHeader() {
             Source
           </a>
         </nav>
+        <WalletButton />
       </div>
     </header>
   )

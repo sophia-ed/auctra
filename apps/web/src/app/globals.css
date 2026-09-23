@@ -140,3 +140,33 @@ a {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Restrained overrides for the Solana wallet adapter UI (Section 68). */
+.wallet-adapter-button {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line-strong) !important;
+  border-radius: var(--radius) !important;
+  color: var(--ink) !important;
+  font-family: var(--font-mono) !important;
+  font-size: 0.75rem !important;
+  height: auto !important;
+  line-height: 1.2 !important;
+  padding: 0.4rem 0.75rem !important;
+}
+
+.wallet-adapter-button:not([disabled]):hover {
+  background: var(--accent-dim) !important;
+}
+
+.wallet-adapter-modal-wrapper {
+  background: var(--surface) !important;
+  border: 1px solid var(--line-strong) !important;
+}
+
+.wallet-adapter-modal-title {
+  color: var(--ink) !important;
+}
+
+.wallet-adapter-modal-list .wallet-adapter-button {
+  width: 100% !important;
+}

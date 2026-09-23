@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
+import { WalletProviders } from '@/components/wallet/wallet-providers'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -24,11 +25,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           Skip to content
         </a>
-        <SiteHeader />
-        <main id="main" className="mx-auto max-w-6xl px-5 py-10">
-          {children}
-        </main>
-        <SiteFooter />
+        <WalletProviders>
+          <SiteHeader />
+          <main id="main" className="mx-auto max-w-6xl px-5 py-10">
+            {children}
+          </main>
+          <SiteFooter />
+        </WalletProviders>
       </body>
     </html>
   )
