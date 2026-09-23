@@ -95,6 +95,10 @@ dilute it.
 | 56 Explorer | `apps/web/src/app/pools/[address]/page.tsx`, `GET /api/pools/:address` |
 | 57 Wallet | `apps/web/src/components/wallet/` (`wallet-providers.tsx`, `wallet-button.tsx`, `deployment-panel.tsx`) |
 | 71 Demo page | `apps/web/src/app/demo/page.tsx` |
+| 62 Worker | `apps/worker/src/worker.ts`, `apps/worker/src/index.ts` |
+| 63 Caching | `packages/cache/src/index.ts` (`cachedLoad` keeps the last good value) |
+| 72 Demo data / DemoMode | `apps/web/src/components/data-mode-banner.tsx`, `DemoLifecycleProvider` seeds |
+| 73 Real data mode | `GET /api/status` (`LIVE` / `STALE` / `DEMO` / `UNCONFIGURED`) |
 | 74 Historical case study | `apps/web/src/app/case-studies/[symbol]/page.tsx` |
 | 89-91 Why Meteora / Pyth / PreStocks | `apps/web/src/app/why/meteora`, `why/pyth`, `why/prestocks` |
 | 45 Policy explanation | `packages/domain/src/policy/explanation.ts` |

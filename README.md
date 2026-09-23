@@ -27,11 +27,12 @@ built yet.
 | `@auctra/meteora` — DBC adapter, validation, migration status, version guard | done (15 tests) |
 | `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
 | `@auctra/database` — Postgres schema + repository layer | done (6 tests) |
-| `@auctra/api` — typed backend (Section 58 routes) | done (15 tests) |
+| `@auctra/cache` — TTL cache with graceful degradation | done (4 tests) |
+| `@auctra/api` — typed backend (Section 58 routes, status) | done (16 tests) |
 | `@auctra/web` — Next.js app | 15 routes incl. DBC lab, audit, monitor, pools, case studies, demo; Solana wallet (devnet-safe) |
-| `apps/worker` | not started (Bit 4) |
+| `@auctra/worker` — background refresh (read-only) | done (4 tests) |
 
-129 tests, clean typecheck across all packages.
+138 tests, clean typecheck across all packages.
 
 ### Running the API
 

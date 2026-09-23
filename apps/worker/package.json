@@ -1,0 +1,36 @@
+{
+  "name": "@auctra/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/worker.ts",
+  "exports": {
+    ".": {
+      "types": "./src/worker.ts",
+      "import": "./src/worker.ts",
+      "default": "./src/worker.ts"
+    }
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "start": "tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@auctra/cache": "workspace:*",
+    "@auctra/config": "workspace:*",
+    "@auctra/database": "workspace:*",
+    "@auctra/domain": "workspace:*",
+    "@auctra/meteora": "workspace:*",
+    "@auctra/prestocks": "workspace:*",
+    "@auctra/pyth": "workspace:*",
+    "tsx": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.6.0",
+    "vitest": "^3.0.0"
+  }
+}

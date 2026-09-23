@@ -21,6 +21,7 @@ const STATUS_META: Record<string, StatusMeta> = {
 
   PENDING: { tone: 'warn', symbol: '◐', text: 'PENDING' },
   AGING: { tone: 'warn', symbol: '◐', text: 'AGING' },
+  DEMO: { tone: 'warn', symbol: '◐', text: 'DEMO' },
   UNKNOWN: { tone: 'warn', symbol: '◐', text: 'UNKNOWN' },
   UNCONFIGURED: { tone: 'warn', symbol: '◐', text: 'UNCONFIGURED' },
   MODEL: { tone: 'warn', symbol: '◐', text: 'MODEL' },

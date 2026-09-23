@@ -171,6 +171,20 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
   const now = deps.now ?? (() => new Date().toISOString())
   const app = Fastify({ logger: deps.logger ?? false })
 
+  /** Last observed health per provider, for the data-mode indicator (Sections 72-73). */
+  const providerHealth = new Map<string, { ok: boolean; at: string; detail?: string }>()
+  const recordProvider = (name: string, ok: boolean, detail?: string) => {
+    providerHealth.set(name, { ok, at: now(), detail })
+  }
+  const providerEntry = (name: string, fallback: 'LIVE' | 'DEMO' | 'UNCONFIGURED') => {
+    const health = providerHealth.get(name)
+    if (health && !health.ok) return { status: 'STALE' as const, lastCheckedAt: health.at, detail: health.detail }
+    // Demo data stays DEMO even when the fetch succeeds; everything else that
+    // answered successfully is LIVE.
+    if (health && health.ok) return { status: fallback === 'DEMO' ? ('DEMO' as const) : ('LIVE' as const), lastCheckedAt: health.at }
+    return { status: fallback, lastCheckedAt: undefined }
+  }
+
   await app.register(helmet)
   await app.register(cors, { origin: false })
   await app.register(rateLimit, { max: 120, timeWindow: '1 minute' })
@@ -195,19 +209,25 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
 
   async function ensureAssets(): Promise<void> {
     if (deps.repos.assets.list().length > 0) return
-    const detailed = await deps.prestocks.listAssetsDetailed()
-    for (const asset of detailed.assets) {
-      deps.repos.assets.upsert(assetToRecord(asset))
-      deps.repos.audit.append({ kind: 'asset_imported', assetId: asset.id, source: 'prestocks' })
+    try {
+      const detailed = await deps.prestocks.listAssetsDetailed()
+      for (const asset of detailed.assets) {
+        deps.repos.assets.upsert(assetToRecord(asset))
+        deps.repos.audit.append({ kind: 'asset_imported', assetId: asset.id, source: 'prestocks' })
+      }
+      deps.repos.sources.register({
+        id: detailed.source.id,
+        sourceType: detailed.source.sourceType,
+        url: detailed.source.url,
+        retrievedAt: detailed.source.retrievedAt,
+        contentHash: detailed.source.contentHash,
+        description: detailed.source.description,
+      })
+      recordProvider('prestocks', true)
+    } catch (error) {
+      recordProvider('prestocks', false, error instanceof Error ? error.message : String(error))
+      throw error
     }
-    deps.repos.sources.register({
-      id: detailed.source.id,
-      sourceType: detailed.source.sourceType,
-      url: detailed.source.url,
-      retrievedAt: detailed.source.retrievedAt,
-      contentHash: detailed.source.contentHash,
-      description: detailed.source.description,
-    })
   }
 
   async function ensureEvents(asset: PreStockAssetRecord): Promise<LifecycleEvent[]> {
@@ -264,6 +284,22 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     network: deps.config.network,
     enableMainnet: deps.config.enableMainnet,
     demoMode: deps.config.demoMode,
+  }))
+
+  // Data-mode and provider status (Sections 72-73). A failing provider is STALE,
+  // never LIVE, and demo data is labelled DEMO.
+  app.get('/api/status', async () => ({
+    mode: deps.config.demoMode ? 'DEMO' : 'LIVE',
+    network: deps.config.network,
+    enableMainnet: deps.config.enableMainnet,
+    providers: {
+      prestocks: providerEntry('prestocks', deps.config.demoMode ? 'DEMO' : 'LIVE'),
+      pyth: providerEntry('pyth', deps.config.pythApiKey ? 'LIVE' : 'UNCONFIGURED'),
+      solana: { status: deps.config.solanaRpcUrl ? 'LIVE' : 'UNCONFIGURED', lastCheckedAt: undefined },
+      meteora: { status: deps.dbc ? 'LIVE' : 'UNCONFIGURED', lastCheckedAt: undefined },
+    },
+    assets: deps.repos.assets.list().length,
+    pools: deps.repos.pools.list().length,
   }))
 
   // --- assets ---------------------------------------------------------------
@@ -331,11 +367,13 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
         retrievedAt: now(),
       })
       deps.repos.audit.append({ kind: 'reference_observed', assetId: request.params.asset, source: 'pyth' })
+      recordProvider('pyth', true)
       return { observation: toJsonValue(observation), referenceState: toJsonValue(referenceState) }
     } catch (error) {
       if (error instanceof PythObservationUnavailableError) {
         return reply.code(503).send({ error: 'reference_unavailable', message: error.message })
       }
+      recordProvider('pyth', false, error instanceof Error ? error.message : String(error))
       return reply.code(404).send({
         error: 'reference_not_found',
         message: error instanceof Error ? error.message : 'unknown',

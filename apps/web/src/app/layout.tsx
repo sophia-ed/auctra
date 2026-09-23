@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
+import { DataModeBanner } from '@/components/data-mode-banner'
 import { SiteFooter } from '@/components/site-footer'
 import { SiteHeader } from '@/components/site-header'
 import { WalletProviders } from '@/components/wallet/wallet-providers'
@@ -26,6 +27,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           Skip to content
         </a>
         <WalletProviders>
+          <DataModeBanner />
           <SiteHeader />
           <main id="main" className="mx-auto max-w-6xl px-5 py-10">
             {children}

@@ -321,6 +321,26 @@ export interface PoolResponse {
   migration?: Record<string, unknown>
 }
 
+export interface ProviderStatusJson {
+  status: string
+  lastCheckedAt?: string
+  detail?: string
+}
+
+export interface StatusResponse {
+  mode: string
+  network: string
+  enableMainnet: boolean
+  providers: {
+    prestocks: ProviderStatusJson
+    pyth: ProviderStatusJson
+    solana: ProviderStatusJson
+    meteora: ProviderStatusJson
+  }
+  assets: number
+  pools: number
+}
+
 export interface ClockReadingJson {
   venue: string
   status: string

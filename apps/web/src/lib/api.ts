@@ -15,6 +15,7 @@ import type {
   PoolResponse,
   ReferenceResponse,
   SimulateResponse,
+  StatusResponse,
   TransitionResponse,
 } from './types'
 
@@ -74,6 +75,7 @@ export interface CompileRequest {
 export const api = {
   health: () => request<HealthResponse>('/api/health'),
   config: () => request<NetworkConfigResponse>('/api/config'),
+  status: () => request<StatusResponse>('/api/status'),
   listAssets: () => request<{ assets: AssetRecord[] }>('/api/assets'),
   getAsset: (symbol: string) =>
     request<{ asset: AssetRecord }>(`/api/assets/${encodeURIComponent(symbol)}`),

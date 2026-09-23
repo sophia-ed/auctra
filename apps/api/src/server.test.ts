@@ -296,6 +296,21 @@ describe('API contract (Section 58)', () => {
     expect(bad.statusCode).toBe(400)
   })
 
+  it('reports data mode and provider status', async () => {
+    const status = await app.inject({ method: 'GET', url: '/api/status' })
+    expect(status.statusCode).toBe(200)
+    const body = status.json()
+    expect(body.mode).toBe('DEMO')
+    expect(body.providers.prestocks.status).toBe('DEMO')
+    expect(body.providers.meteora.status).toBe('LIVE')
+    expect(body.providers.solana.status).toBe('UNCONFIGURED')
+
+    // A successful reference call marks Pyth live.
+    await app.inject({ method: 'GET', url: '/api/reference/SPACEX' })
+    const after = await app.inject({ method: 'GET', url: '/api/status' })
+    expect(after.json().providers.pyth.status).toBe('LIVE')
+  })
+
   it('lists stored pools', async () => {
     const response = await app.inject({ method: 'GET', url: '/api/pools' })
     expect(response.statusCode).toBe(200)
