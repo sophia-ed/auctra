@@ -24,7 +24,7 @@ built yet.
 | `@auctra/domain` — lifecycle, transition, policy, plan, simulation, clocks, dossier, reporting, replay | done (59 tests) |
 | `@auctra/prestocks` — asset provider, normalization, lifecycle providers | done (15 tests) |
 | `@auctra/pyth` — reference model, freshness, feed registry, discovery | done (12 tests) |
-| `@auctra/meteora` — DBC adapter, validation, migration status, version guard | done (15 tests) |
+| `@auctra/meteora` — DBC adapter, validation, migration status, version guard, real SDK curve builder | done (17 tests) |
 | `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
 | `@auctra/database` — Postgres schema, in-memory + pg repositories | done (10 tests) |
 | `@auctra/cache` — TTL cache with graceful degradation | done (4 tests) |
@@ -34,7 +34,8 @@ built yet.
 | `tests/e2e` — one complete pipeline test | done (1 test) |
 | Docker — `Dockerfile`, `docker-compose.yml` | image builds and the API container responds |
 
-143 tests, clean typecheck across all packages.
+145 tests, clean typecheck across all packages. The Meteora DBC SDK 1.5.12 is
+installed and its curve builder is used directly.
 
 ## Deployment (Docker VPS)
 

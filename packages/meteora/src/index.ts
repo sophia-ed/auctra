@@ -2,10 +2,18 @@ export {
   EXPECTED_DBC_SDK_VERSION,
   DBC_PROGRAM_ID,
   REQUIRED_SDK_EXPORTS,
+  SDK_FEE_DENOMINATOR,
+  SDK_MAX_CURVE_POINT,
+  CLIENT_POOL_READ_METHODS,
   type VersionCheckResult,
   checkSdkVersion,
   readInstalledSdkVersion,
 } from './dbc/version'
+export {
+  type SdkCurveInputs,
+  type SdkCurveBuild,
+  buildSdkCurveParameters,
+} from './dbc/sdk-curve'
 export {
   BaseFeeMode,
   MigrationOption,

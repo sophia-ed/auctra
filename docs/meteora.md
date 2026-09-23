@@ -7,10 +7,40 @@ configuration; it does not deploy on its own.
 
 ## Pinned SDK
 
-`@meteora-ag/dynamic-bonding-curve-sdk` **1.5.12** (see
-[`sdk-versions.md`](./sdk-versions.md)). The SDK is not installed in the
-domain-core build; the adapter targets the documented surface and
-`scripts/verify-versions.mjs` fails clearly on drift.
+`@meteora-ag/dynamic-bonding-curve-sdk` **1.5.12** is installed and used for real
+(see [`sdk-versions.md`](./sdk-versions.md)). `scripts/verify-versions.mjs` reads
+the installed version and fails on drift.
+
+Verified against the installed `dist/index.d.ts`:
+
+- `FEE_DENOMINATOR = 1000000000` — confirms `PROVISIONAL_FEE_DENOMINATOR`;
+- `MAX_CURVE_POINT = 16` — confirms the segment cap;
+- top-level exports `buildCurveWithLiquidityWeights`,
+  `buildCurveWithCustomSqrtPrices`, `DynamicBondingCurveClient`,
+  `getFeeSchedulerParams`, `validateCurve`, `validateConfigParameters`;
+- pool reads are client methods, not top-level exports:
+  `state.getPool`, `state.getPoolConfig`,
+  `state.getPoolQuoteTokenCurveProgress`,
+  `state.getPoolMigrationQuoteThreshold`.
+
+A test (`src/dbc/sdk-curve.test.ts`) asserts the version, the exports and the two
+constants, so drift fails CI.
+
+## Real curve construction (Section 25)
+
+`buildSdkCurveParameters(plan, inputs)` calls the SDK's
+`buildCurveWithLiquidityWeights` with Auctra's weights and returns the SDK's
+`ConfigParameters`. Two facts learned from the installed SDK:
+
+- the builder always produces **16 segments**, so an Auctra policy with fewer
+  segments is resampled onto 16 by linear interpolation of the normalised
+  profile (warned in the result);
+- it requires leftover headroom — with `leftover` too small it throws
+  `leftOverDelta must be less than totalLeftover`. `SdkCurveInputs.leftover` is
+  therefore explicit.
+
+The result is validated with the SDK's own `validateCurve`.
+
 
 ## Adapter surface (Section 30)
 

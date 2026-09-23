@@ -21,6 +21,15 @@ No application code has been written yet. This file records the versions the sca
 | `node` | ≥ 20.9 (target 20 LTS or 22 LTS) | — | No version pinned by a dependency; choose at scaffold. |
 | package manager | `pnpm` | AUCTRA.md Section 59 | Use pnpm unless the repo already standardizes elsewhere. |
 
+**Status (2026-09-23):** `@meteora-ag/dynamic-bonding-curve-sdk` **1.5.12 is
+installed** as a dependency of `packages/meteora`. The version guard
+(`scripts/verify-versions.mjs`) resolves it and reports OK. Values confirmed from
+the installed `dist/index.d.ts`: `FEE_DENOMINATOR = 1000000000`,
+`MAX_CURVE_POINT = 16`. The curve builder is used directly by
+`buildSdkCurveParameters`; the network transaction client binding is still
+pending. Gaps a build dependency introduces (e.g. `bigint-buffer`) fall back to
+pure JS if native bindings fail to compile.
+
 ### 1a. Frontend stack (Section 59)
 
 Pinned 2026-09-23 from the npm registry (`npm view <pkg> version`):

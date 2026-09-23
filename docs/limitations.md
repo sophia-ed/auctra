@@ -5,13 +5,18 @@ present in this build, it is stated rather than implied.
 
 ## Protocol and SDK
 
-- **The Meteora DBC SDK is not installed.** The adapter targets the documented
-  surface (`@meteora-ag/dynamic-bonding-curve-sdk` 1.5.12) and its network binding
-  is completed in the deployment phase. `createSdkBackedClient` fails clearly
-  while the SDK is absent, and `/api/dbc/prepare` returns `503`.
-- **Two Meteora values are unconfirmed against the IDL**: the fee denominator
-  (`PROVISIONAL_FEE_DENOMINATOR`) and the DBC program id. Both are exported
-  constants flagged in [`meteora.md`](./meteora.md).
+- **The Meteora DBC SDK (1.5.12) is installed and its curve builder is used
+  directly**; the version guard checks the real installed package. What is *not*
+  wired is the network transaction client: `createSdkBackedClient` still throws a
+  clear error until the on-chain binding is completed, so `/api/dbc/prepare`
+  returns `503`.
+- **The fee denominator and program id are now partly confirmed**: the installed
+  SDK exports `FEE_DENOMINATOR = 1000000000` (matching
+  `PROVISIONAL_FEE_DENOMINATOR`) and `MAX_CURVE_POINT = 16`. The DBC program id
+  remains unconfirmed against the IDL.
+- **The SDK's curve builder always produces 16 segments** and requires leftover
+  token headroom; Auctra resamples its policy weights onto 16 and exposes
+  `leftover` explicitly.
 - **No DBC pool has been deployed.** The pool explorer therefore has nothing to
   show until a wallet-signed deployment happens; it reads from the chain when it
   can and returns an honest empty state otherwise.

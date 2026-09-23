@@ -158,7 +158,7 @@ describe('Meteora DBC adapter (Section 30)', () => {
     expect(client.migrations).toEqual([{ payer: 'PAYER', pool: 'POOL' }])
   })
 
-  it('refuses to fabricate an SDK client while the SDK is uninstalled', async () => {
+  it('does not hand back a client until the transaction binding is wired', async () => {
     await expect(createSdkBackedClient()).rejects.toBeInstanceOf(MeteoraSdkUnavailableError)
   })
 })
