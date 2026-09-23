@@ -58,14 +58,14 @@ export function computeTransitionGap(input: TransitionGapInput): TransitionGap {
   const targetReference = dec(input.targetReference as DecimalInput)
   const conversion = dec(input.conversionRatio as DecimalInput)
 
-  if (!targetReference.isPositive()) {
+  if (!targetReference.gt(0)) {
     return {
       status: 'NOT_COMPUTABLE',
       missingInputs: ['targetReference must be positive'],
       ...base,
     }
   }
-  if (!conversion.isPositive()) {
+  if (!conversion.gt(0)) {
     return {
       status: 'NOT_COMPUTABLE',
       missingInputs: ['conversionRatio must be positive'],

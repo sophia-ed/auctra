@@ -66,7 +66,7 @@ export interface TransitionCurve {
  */
 export function buildTransitionCurve(input: TransitionCurveInput): TransitionCurve {
   const referencePrice = dec(input.referencePrice)
-  if (!referencePrice.isPositive()) {
+  if (!referencePrice.gt(0)) {
     throw new Error('buildTransitionCurve: referencePrice must be positive')
   }
 
@@ -117,7 +117,7 @@ export function buildTransitionCurve(input: TransitionCurveInput): TransitionCur
     const distance = price.div(referencePrice).ln().abs()
 
     let adaptiveFactor = new Decimal(1)
-    if (input.mode === 'EVENT_ADAPTIVE' && distance.isPositive()) {
+    if (input.mode === 'EVENT_ADAPTIVE' && distance.gt(0)) {
       const sign = price.gt(referencePrice) ? 1 : -1
       const normalized = distance.div(spread)
       adaptiveFactor = clampDecimal(

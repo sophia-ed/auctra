@@ -82,7 +82,7 @@ export function validateDbcPlan(plan: DbcPlan): ValidationIssue[] {
   }
 
   for (let i = 0; i < plan.pricePoints.length; i += 1) {
-    if (!plan.pricePoints[i].isPositive()) {
+    if (!plan.pricePoints[i].gt(0)) {
       issues.push({ code: 'NON_POSITIVE_PRICE', message: `price point ${i} is not positive` })
     }
     if (i > 0 && !plan.pricePoints[i].gt(plan.pricePoints[i - 1])) {
@@ -91,7 +91,7 @@ export function validateDbcPlan(plan: DbcPlan): ValidationIssue[] {
   }
 
   const weightSum = plan.liquidityWeights.reduce((sum, weight) => sum.plus(weight), new Decimal(0))
-  if (!weightSum.isPositive() || weightSum.minus(1).abs().gt('0.000000001')) {
+  if (!weightSum.gt(0) || weightSum.minus(1).abs().gt('0.000000001')) {
     issues.push({
       code: 'WEIGHTS_NOT_NORMALIZED',
       message: `liquidity weights must sum to 1 (got ${weightSum.toFixed(12)})`,
@@ -109,7 +109,7 @@ export function validateDbcPlan(plan: DbcPlan): ValidationIssue[] {
     issues.push({ code: 'ACTIVATION_NOT_TIMESTAMP', message: 'Auctra uses timestamp activation' })
   }
 
-  if (!plan.migrationQuoteThreshold.isPositive()) {
+  if (!plan.migrationQuoteThreshold.gt(0)) {
     issues.push({
       code: 'MIGRATION_THRESHOLD_NOT_POSITIVE',
       message: 'migrationQuoteThreshold must be greater than zero',
@@ -136,6 +136,8 @@ export interface CurveBuilderParams {
   migrationQuoteThreshold: string
   quoteMint: string
   liquidityWeightsRelative: number[]
+  initialMarketCap: string
+  migrationMarketCap: string
   warnings: string[]
 }
 
@@ -178,6 +180,8 @@ export function toCurveBuilderParams(plan: DbcPlan, inputs: CurveBuilderInputs):
     migrationQuoteThreshold: plan.migrationQuoteThreshold.toFixed(0),
     quoteMint: plan.quoteMint,
     liquidityWeightsRelative: plan.liquidityWeightsRelative,
+    initialMarketCap: inputs.initialMarketCap,
+    migrationMarketCap: inputs.migrationMarketCap,
     warnings,
   }
 }

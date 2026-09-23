@@ -48,7 +48,7 @@ export function buildDbcPlan(input: DbcPlanInput): DbcPlan {
   if (input.curve.segments > MAX_CURVE_SEGMENTS) {
     warnings.push(`segments ${input.curve.segments} exceeds the DBC maximum of ${MAX_CURVE_SEGMENTS}`)
   }
-  if (!migrationQuoteThreshold.isPositive()) {
+  if (!migrationQuoteThreshold.gt(0)) {
     warnings.push('migrationQuoteThreshold must be greater than zero for a DBC config')
   }
   if (input.feePolicy.startingFeeBps > 1000) {

@@ -13,3 +13,6 @@ export interface PolicyExplanation {
 export function explain(input: string, effect: string, output: string): PolicyExplanation {
   return { input, effect, output }
 }
+
+/** Alias used where the triple describes a derived value rather than an action. */
+export const explanationFrom = explain

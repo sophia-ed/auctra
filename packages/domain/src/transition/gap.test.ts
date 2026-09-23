@@ -54,4 +54,22 @@ describe('transition gap (Section 18)', () => {
     expect(gap.impliedTargetValue?.toFixed(4)).toBe('71.6500')
     expect(gap.absoluteGap?.toFixed(4)).toBe('-81.8159')
   })
+
+  it('rejects a zero ratio or zero reference (decimal.js isPositive(0) is true)', () => {
+    const zeroRatio = computeTransitionGap({
+      sourceReference: '100',
+      targetReference: '153.46',
+      conversionRatio: '0',
+    })
+    expect(zeroRatio.status).toBe('NOT_COMPUTABLE')
+    expect(zeroRatio.missingInputs).toContain('conversionRatio must be positive')
+
+    const zeroTarget = computeTransitionGap({
+      sourceReference: '100',
+      targetReference: '0',
+      conversionRatio: '1',
+    })
+    expect(zeroTarget.status).toBe('NOT_COMPUTABLE')
+    expect(zeroTarget.missingInputs).toContain('targetReference must be positive')
+  })
 })

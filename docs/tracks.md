@@ -53,3 +53,22 @@ dilute it.
 | 8 Lifecycle engine | `packages/domain/src/lifecycle/` |
 | 9 Corporate-action sources | `packages/prestocks/src/lifecycle/` |
 | 10 Real lifecycle examples | `packages/prestocks/src/lifecycle/providers.ts` (`DEMO_LIFECYCLE_SEEDS`) |
+
+## Section 11-30 implementation map
+
+| Section | Where |
+|---|---|
+| 11 Transition state machine | `packages/domain/src/lifecycle/machine.ts` |
+| 12 Transition dossier | `packages/domain/src/dossier/dossier.ts` |
+| 13-16 Pyth integration, data model, freshness, session | `packages/pyth/src/` |
+| 17 Dual-clock model | `packages/domain/src/clocks/clocks.ts` |
+| 18 Transition gap | `packages/domain/src/transition/gap.ts` |
+| 19 Conversion specification | `packages/domain/src/transition/conversion.ts` |
+| 20 Transition plan | `packages/domain/src/plan/` |
+| 21 Liquidity plan | `packages/domain/src/policy/liquidity.ts` |
+| 22-25 Transition curve and mathematics | `packages/domain/src/policy/curve.ts` |
+| 26 Event intensity | `packages/domain/src/policy/intensity.ts` |
+| 27 Fee policy | `packages/domain/src/policy/fees.ts` |
+| 28 Timestamp activation | `packages/domain/src/policy/activation.ts` |
+| 29 Migration model | `packages/domain/src/policy/migration.ts` |
+| 30 Meteora adapter | `packages/meteora/src/dbc/adapter.ts`, `client.ts` |

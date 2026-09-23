@@ -52,8 +52,8 @@ export function conversionRatio(spec: ConversionSpec): Decimal {
 export function isConversionVerified(spec: ConversionSpec | undefined): spec is ConversionSpec {
   if (!spec) return false
   return (
-    spec.ratioDenominator.isPositive() &&
-    spec.ratioNumerator.isPositive() &&
+    spec.ratioDenominator.gt(0) &&
+    spec.ratioNumerator.gt(0) &&
     spec.sourceUrl.length > 0 &&
     spec.verifiedAt.length > 0
   )

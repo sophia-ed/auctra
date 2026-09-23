@@ -45,7 +45,7 @@ function buildLadder(config: SimulationConfig): CurveLadder {
     }
   }
   const weightSum = weights.reduce((sum, weight) => sum.plus(weight), new Decimal(0))
-  if (!weightSum.isPositive()) throw new Error('simulate: weights must be positive')
+  if (!weightSum.gt(0)) throw new Error('simulate: weights must be positive')
 
   const firstLog = prices[0].ln()
   const lastLog = prices[prices.length - 1].ln()
@@ -101,7 +101,7 @@ function simulateSide(
     const width = hi.minus(lo)
     const depth = ladder.bandDepth[band]
 
-    if (!width.isPositive() || !depth.isPositive()) {
+    if (!width.gt(0) || !depth.gt(0)) {
       band += side === 'BUY' ? 1 : -1
       currentPrice = side === 'BUY' ? hi : lo
       continue
@@ -156,7 +156,7 @@ function simulateInstruction(
   instruction: TradeInstruction,
 ): { next: SimState; result: TradeResult } {
   const notional = dec(instruction.quoteAmount)
-  if (!notional.isPositive()) throw new Error('simulate: trade notional must be positive')
+  if (!notional.gt(0)) throw new Error('simulate: trade notional must be positive')
 
   const fee = notional.times(config.feeBps).div(10000)
   const effective = notional.minus(fee)

@@ -54,7 +54,7 @@ export {
 } from './transition/conversion'
 export { type TransitionGap, type TransitionGapInput, computeTransitionGap } from './transition/gap'
 
-export { type PolicyExplanation, explain } from './policy/explanation'
+export { type PolicyExplanation, explain, explanationFrom } from './policy/explanation'
 export {
   EVENT_SEVERITY,
   EVENT_INTENSITY_TAU_DAYS,
@@ -77,6 +77,13 @@ export { type FeeMode, type DbcFeePolicy, type FeePolicyInput, computeFeePolicy 
 export { type ActivationType, type ActivationPlan, type ActivationInput, computeActivation } from './policy/activation'
 export { type Provenance, type SourcedValue, type LiquidityPlan, type LiquidityPlanInput, buildLiquidityPlan } from './policy/liquidity'
 export { type DbcPlan, type DbcPlanInput, buildDbcPlan } from './policy/dbc'
+export {
+  type MigrationProtocolCondition,
+  type AuctraMigrationRecommendation,
+  type MigrationModel,
+  type MigrationInput,
+  buildMigrationModel,
+} from './policy/migration'
 export {
   type SourceRecord,
   type SourceRecordInput,
@@ -119,3 +126,23 @@ export {
   recomputeOutputHash,
   recompileInputHash,
 } from './plan/compile'
+export {
+  type ClockVenue,
+  type ClockStatus,
+  type ClockReading,
+  type ClockModel,
+  type ClockInput,
+  computeClockModel,
+} from './clocks/clocks'
+export {
+  type DossierAsset,
+  type DossierEventSummary,
+  type TargetAssetStatus,
+  type ConversionStatus,
+  type DossierMarketReference,
+  type DossierLiquidityState,
+  type DossierGapSummary,
+  type TransitionDossier,
+  type DossierInput,
+  buildTransitionDossier,
+} from './dossier/dossier'
