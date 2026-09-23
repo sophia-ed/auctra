@@ -154,6 +154,7 @@ export interface EventsRepository {
 
 export interface ReferenceRepository {
   insert(record: ReferenceObservationRecord): void
+  list(): ReferenceObservationRecord[]
   listByAsset(symbol: string): ReferenceObservationRecord[]
 }
 

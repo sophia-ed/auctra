@@ -10,10 +10,12 @@ export function CurveChart({
   points,
   referencePrice,
   title,
+  metric = 'weight',
 }: {
   points: CurvePointJson[]
   referencePrice?: string
   title: string
+  metric?: 'weight' | 'liquidity'
 }) {
   if (points.length === 0) {
     return (
@@ -29,18 +31,18 @@ export function CurveChart({
   const padTop = 24
   const padBottom = 40
   const prices = points.map((point) => Number(point.price))
-  const weights = points.map((point) => Number(point.weight))
+  const values = points.map((point) => (metric === 'liquidity' ? Number(point.liquidity) : Number(point.weight)))
   const minPrice = Math.min(...prices)
   const maxPrice = Math.max(...prices)
   const spanPrice = maxPrice - minPrice || 1
-  const maxWeight = Math.max(...weights, Number.EPSILON)
+  const maxValue = Math.max(...values, Number.EPSILON)
   const innerWidth = width - padX * 2
   const innerHeight = height - padTop - padBottom
   const baseline = height - padBottom
   const px = (price: number) => padX + ((price - minPrice) / spanPrice) * innerWidth
   const barWidth = Math.max(3, (innerWidth / points.length) * 0.55)
   const path = points
-    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${px(prices[index]).toFixed(1)} ${(baseline - (weights[index] / maxWeight) * innerHeight).toFixed(1)}`)
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${px(prices[index]).toFixed(1)} ${(baseline - (values[index] / maxValue) * innerHeight).toFixed(1)}`)
     .join(' ')
 
   const referenceX =
@@ -53,7 +55,7 @@ export function CurveChart({
       <svg role="img" aria-label={title} viewBox={`0 0 ${width} ${height}`} className="h-auto w-full">
         <title>{title}</title>
         {points.map((point, index) => {
-          const barHeight = (weights[index] / maxWeight) * innerHeight
+          const barHeight = (values[index] / maxValue) * innerHeight
           return (
             <rect
               key={point.index}
@@ -92,7 +94,7 @@ export function CurveChart({
           {formatNumber(maxPrice, 2)}
         </text>
         <text x={padX} y={14} fontSize="11" fill="var(--muted)">
-          liquidity weight
+          {metric === 'liquidity' ? 'liquidity' : 'liquidity weight'}
         </text>
       </svg>
 

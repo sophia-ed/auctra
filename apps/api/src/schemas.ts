@@ -84,7 +84,33 @@ export const dbcPrepareRequestSchema = z.object({
   migrationMarketCap: decimalInput,
 })
 
+export const dbcLabRequestSchema = z.object({
+  curveMode: z.enum(['REFERENCE_CENTERED', 'TRANSITION_WIDE', 'EVENT_ADAPTIVE']),
+  segments: z.number().int().min(2).max(16),
+  referencePrice: decimalInput,
+  referenceConfidenceBps: decimalInput.optional(),
+  currentPremiumBps: decimalInput.optional(),
+  eventIntensity: decimalInput,
+  targetLiquidity: decimalInput,
+  migrationQuoteThreshold: decimalInput,
+  quoteMint: z.string().min(1),
+  scenario: z
+    .enum([
+      'NORMAL',
+      'IPO_ANNOUNCED',
+      'IPO_IMMINENT',
+      'PUBLIC_MARKET_OPENS',
+      'PUBLIC_MARKET_PRICE_GAP',
+      'HIGH_REFERENCE_UNCERTAINTY',
+      'CONVERSION_DEADLINE_APPROACHING',
+      'ACQUISITION_EVENT',
+      'NO_TARGET_ASSET',
+    ])
+    .optional(),
+})
+
 export type EventRequest = z.infer<typeof eventRequestSchema>
 export type CompileRequest = z.infer<typeof compileRequestSchema>
 export type SimulationRequest = z.infer<typeof simulationRequestSchema>
 export type DbcPrepareRequest = z.infer<typeof dbcPrepareRequestSchema>
+export type DbcLabRequest = z.infer<typeof dbcLabRequestSchema>

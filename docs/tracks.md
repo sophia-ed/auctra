@@ -89,7 +89,13 @@ dilute it.
 | 42 Asset page | `apps/web/src/app/assets/[symbol]/page.tsx` (`/api/lifecycle`, `/api/clocks`, `/api/reference`) |
 | 43 Transition page | `apps/web/src/app/transition/[id]/page.tsx` |
 | 44 Transition plan builder | `apps/web/src/app/create/page.tsx`, `apps/web/src/components/plan-builder.tsx` |
-| 50, 51, 54, 56, 57 Data audit, monitor, DBC lab, explorer, wallet | not started (next bits) |
+| 50 Data audit | `apps/web/src/app/audit/page.tsx`, `GET /api/audit` |
+| 51 Live monitor | `apps/web/src/app/monitor/page.tsx`, `GET /api/monitor` |
+| 54 DBC curve lab | `apps/web/src/app/dbc-lab/page.tsx`, `POST /api/dbc/lab` |
+| 56 Explorer | `apps/web/src/app/pools/[address]/page.tsx`, `GET /api/pools/:address` |
+| 57 Wallet | not started (Bit 3b) |
+| 74 Historical case study | `apps/web/src/app/case-studies/[symbol]/page.tsx` |
+| 89-91 Why Meteora / Pyth / PreStocks | `apps/web/src/app/why/meteora`, `why/pyth`, `why/prestocks` |
 | 45 Policy explanation | `packages/domain/src/policy/explanation.ts` |
 | 46 Policy JSON | `packages/domain/src/plan/serialize.ts` |
 | 47 Reproducibility | `packages/domain/src/math/hash.ts`, `plan/compile.ts` |

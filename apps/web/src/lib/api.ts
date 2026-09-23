@@ -1,9 +1,14 @@
 import type {
   AssetRecord,
+  AuditResponse,
   ClockModelJson,
   CompileResponse,
   HealthResponse,
+  LabRequest,
+  LabResponse,
   LifecycleResponse,
+  MonitorResponse,
+  PoolJson,
   PoolResponse,
   ReferenceResponse,
   SimulateResponse,
@@ -89,6 +94,11 @@ export const api = {
     }),
   getPool: (address: string) =>
     request<PoolResponse>(`/api/pools/${encodeURIComponent(address)}`),
+  listPools: () => request<{ pools: PoolJson[] }>('/api/pools'),
+  audit: () => request<AuditResponse>('/api/audit'),
+  monitor: () => request<MonitorResponse>('/api/monitor'),
+  dbcLab: (body: LabRequest) =>
+    request<LabResponse>('/api/dbc/lab', { method: 'POST', body: JSON.stringify(body) }),
 }
 
 export { API_BASE }

@@ -10,11 +10,16 @@ import {
 } from '@auctra/database'
 import {
   Decimal,
+  buildDbcPlan,
+  buildLiquidityPlan,
+  buildTransitionCurve,
   buildTransitionDossier,
   buildTransitionTimeline,
   compileTransitionPlan,
   compareToBaseline,
+  computeActivation,
   computeClockModel,
+  computeFeePolicy,
   computePremium,
   computeTransitionGap,
   deriveLifecycleState,
@@ -23,10 +28,12 @@ import {
   reduceLifecycle,
   toJsonValue,
   type AssetReference,
+  type CurveMode,
   type LifecycleEvent,
   type LifecycleEventType,
   type MarketSession,
   type Freshness,
+  type Scenario,
   type SimulationConfig,
   type SimulationPlan,
   type SourceType,
@@ -43,6 +50,7 @@ import {
 import Fastify, { type FastifyError, type FastifyInstance } from 'fastify'
 import {
   compileRequestSchema,
+  dbcLabRequestSchema,
   dbcPrepareRequestSchema,
   dbcValidateRequestSchema,
   eventRequestSchema,
@@ -114,6 +122,49 @@ function eventTimestamp(event: LifecycleEvent): number {
 
 function uniformWeights(count: number): Decimal[] {
   return Array.from({ length: count }, () => new Decimal(1).div(count))
+}
+
+/**
+ * Baseline vs Auctra comparison for a given curve (AUCTRA.md Section 38).
+ * Identical trade sequence; measurements only.
+ */
+function simulateForCurve(params: {
+  idPrefix: string
+  pricePoints: Decimal[]
+  weights: Decimal[]
+  referencePrice: Decimal
+  migrationQuoteThreshold: Decimal
+  feeBps: number
+  scenario: Scenario
+}): SimulationPlan {
+  const preset = getScenarioPreset(params.scenario)
+  const auctraConfig: SimulationConfig = {
+    id: `${params.idPrefix}:auctra`,
+    referencePrice: params.referencePrice,
+    migrationQuoteThreshold: params.migrationQuoteThreshold,
+    feeBps: params.feeBps,
+    curve: {
+      pricePoints: params.pricePoints,
+      weights: params.weights,
+      referencePrice: params.referencePrice,
+    },
+  }
+  const baselineConfig: SimulationConfig = {
+    id: `${params.idPrefix}:baseline`,
+    referencePrice: params.referencePrice,
+    migrationQuoteThreshold: params.migrationQuoteThreshold,
+    feeBps: preset.feeBps,
+    curve: {
+      pricePoints: params.pricePoints,
+      weights: uniformWeights(params.weights.length),
+      referencePrice: params.referencePrice,
+    },
+  }
+  return {
+    scenario: params.scenario,
+    sequenceId: preset.sequence.id,
+    comparison: compareToBaseline(auctraConfig, baselineConfig, preset.sequence),
+  }
 }
 
 export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
@@ -344,6 +395,70 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     return toJsonValue(clocks)
   })
 
+  // --- audit and monitor ----------------------------------------------------
+
+  app.get('/api/audit', async () => {
+    await ensureAssets()
+    return {
+      assets: deps.repos.assets.list(),
+      sources: deps.repos.sources.list(),
+      events: deps.repos.events.list(),
+      observations: deps.repos.references.list(),
+    }
+  })
+
+  app.get('/api/monitor', async () => {
+    await ensureAssets()
+    const asOf = now()
+    const rows: Array<Record<string, unknown>> = []
+
+    for (const asset of deps.repos.assets.list()) {
+      const events = await ensureEvents(asset)
+      const state = deriveLifecycleState(events, asOf)
+
+      let reference: unknown
+      let marketSession: MarketSession | undefined
+      let referenceFreshness: Freshness | undefined
+      if (deps.pyth) {
+        try {
+          const observation = await deps.pyth.getReference({ symbol: asset.symbol })
+          reference = toJsonValue(observation)
+          marketSession = observation.marketSession
+          referenceFreshness = computeFreshness({
+            now: asOf,
+            feedUpdateTimestamp: observation.feedUpdateTimestamp,
+            publishTime: observation.publishTime,
+          }).status
+        } catch {
+          reference = undefined
+        }
+      }
+
+      rows.push({
+        asset,
+        state,
+        reference,
+        clocks: toJsonValue(
+          computeClockModel({
+            asOf,
+            lifecycleState: state,
+            marketSession,
+            referenceFreshness,
+            mainnetEnabled: deps.config.enableMainnet,
+          }),
+        ),
+      })
+    }
+
+    return {
+      asOf,
+      assets: rows,
+      pools: deps.repos.pools
+        .list()
+        .map((pool) => ({ ...pool, snapshots: deps.repos.pools.listSnapshots(pool.address) })),
+    }
+  })
+
   // --- transitions ----------------------------------------------------------
 
   app.post('/api/transition/compile', async (request, reply) => {
@@ -496,30 +611,15 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
 
     const plan = record.payload as TransitionPlan
-    const preset = getScenarioPreset(parsed.data.scenario)
-    const referencePrice = plan.transitionCurve.referencePrice
-
-    const auctraConfig: SimulationConfig = {
-      id: `${plan.id}:auctra`,
-      referencePrice,
+    const simulationPlan = simulateForCurve({
+      idPrefix: plan.id,
+      pricePoints: plan.dbcPlan.pricePoints,
+      weights: plan.dbcPlan.liquidityWeights,
+      referencePrice: plan.transitionCurve.referencePrice,
       migrationQuoteThreshold: plan.dbcPlan.migrationQuoteThreshold,
       feeBps: plan.dbcPlan.feePolicy.startingFeeBps,
-      curve: { pricePoints: plan.dbcPlan.pricePoints, weights: plan.dbcPlan.liquidityWeights, referencePrice },
-    }
-    const baselineConfig: SimulationConfig = {
-      id: `${plan.id}:baseline`,
-      referencePrice,
-      migrationQuoteThreshold: plan.dbcPlan.migrationQuoteThreshold,
-      feeBps: preset.feeBps,
-      curve: { pricePoints: plan.dbcPlan.pricePoints, weights: uniformWeights(plan.dbcPlan.segments), referencePrice },
-    }
-
-    const comparison = compareToBaseline(auctraConfig, baselineConfig, preset.sequence)
-    const simulationPlan: SimulationPlan = {
       scenario: parsed.data.scenario,
-      sequenceId: preset.sequence.id,
-      comparison,
-    }
+    })
     const simulationId = newId('sim')
     deps.repos.simulations.insert({
       id: simulationId,
@@ -583,7 +683,72 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     }
   })
 
+  // --- dbc lab --------------------------------------------------------------
+
+  app.post('/api/dbc/lab', async (request, reply) => {
+    const parsed = dbcLabRequestSchema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.code(400).send({ error: 'validation_failed', issues: parsed.error.issues })
+    }
+    const body = parsed.data
+
+    const curve = buildTransitionCurve({
+      referencePrice: body.referencePrice,
+      referenceConfidenceBps: body.referenceConfidenceBps,
+      currentPremiumBps: body.currentPremiumBps,
+      eventIntensity: body.eventIntensity,
+      mode: body.curveMode as CurveMode,
+      segments: body.segments,
+      liquidityTarget: body.targetLiquidity,
+    })
+    const feePolicy = computeFeePolicy({
+      eventIntensity: body.eventIntensity,
+      referenceConfidenceBps: body.referenceConfidenceBps,
+    })
+    const activation = computeActivation({ asOf: now() })
+    const liquidityPlan = buildLiquidityPlan({
+      curve,
+      feePolicy,
+      activation,
+      migrationQuoteThreshold: body.migrationQuoteThreshold,
+      targetLiquidity: body.targetLiquidity,
+    })
+    const dbcPlan = buildDbcPlan({
+      curve,
+      feePolicy,
+      activation,
+      quoteMint: body.quoteMint,
+      migrationQuoteThreshold: body.migrationQuoteThreshold,
+      tokenType: 'Token2022',
+    })
+    const simulation = simulateForCurve({
+      idPrefix: 'lab',
+      pricePoints: dbcPlan.pricePoints,
+      weights: dbcPlan.liquidityWeights,
+      referencePrice: curve.referencePrice,
+      migrationQuoteThreshold: dbcPlan.migrationQuoteThreshold,
+      feeBps: dbcPlan.feePolicy.startingFeeBps,
+      scenario: (body.scenario ?? 'NORMAL') as Scenario,
+    })
+
+    return {
+      curve: toJsonValue(curve),
+      feePolicy: toJsonValue(feePolicy),
+      activation: toJsonValue(activation),
+      liquidityPlan: toJsonValue(liquidityPlan),
+      dbcPlan: toJsonValue(dbcPlan),
+      simulation: toJsonValue(simulation),
+      validation: deps.dbc ? deps.dbc.validateConfig(dbcPlan) : undefined,
+    }
+  })
+
   // --- pools ----------------------------------------------------------------
+
+  app.get('/api/pools', async () => ({
+    pools: deps.repos.pools
+      .list()
+      .map((pool) => ({ ...pool, snapshots: deps.repos.pools.listSnapshots(pool.address) })),
+  }))
 
   app.get<{ Params: { address: string } }>('/api/pools/:address', async (request, reply) => {
     const pool = deps.repos.pools.get(request.params.address)

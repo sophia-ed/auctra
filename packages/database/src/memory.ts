@@ -60,6 +60,9 @@ class MemoryReferences implements ReferenceRepository {
   insert(record: ReferenceObservationRecord) {
     this.records.push(record)
   }
+  list() {
+    return [...this.records]
+  }
   listByAsset(symbol: string) {
     return this.records.filter((record) => record.assetSymbol.toLowerCase() === symbol.toLowerCase())
   }

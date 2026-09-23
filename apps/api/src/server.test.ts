@@ -245,6 +245,63 @@ describe('API contract (Section 58)', () => {
     expect(read.statusCode).toBe(200)
   })
 
+  it('exposes the audit view and monitor snapshot', async () => {
+    const audit = await app.inject({ method: 'GET', url: '/api/audit' })
+    expect(audit.statusCode).toBe(200)
+    expect(audit.json().assets.length).toBeGreaterThan(0)
+    expect(audit.json().sources.length).toBeGreaterThan(0)
+
+    const monitor = await app.inject({ method: 'GET', url: '/api/monitor' })
+    expect(monitor.statusCode).toBe(200)
+    expect(monitor.json().assets[0].state).toBe('PUBLIC_TRANSITION')
+    expect(Array.isArray(monitor.json().pools)).toBe(true)
+  })
+
+  it('runs the DBC lab and validates the generated config', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/dbc/lab',
+      payload: {
+        curveMode: 'EVENT_ADAPTIVE',
+        segments: 8,
+        referencePrice: '150',
+        referenceConfidenceBps: '40',
+        currentPremiumBps: '200',
+        eventIntensity: '0.7',
+        targetLiquidity: '250000',
+        migrationQuoteThreshold: '100000',
+        quoteMint: 'So11111111111111111111111111111111111111112',
+        scenario: 'IPO_IMMINENT',
+      },
+    })
+    expect(response.statusCode).toBe(200)
+    const body = response.json()
+    expect(body.curve.points).toHaveLength(8)
+    expect(body.simulation.comparison.note).toContain('No winner')
+    expect(body.validation).toEqual([])
+
+    const bad = await app.inject({
+      method: 'POST',
+      url: '/api/dbc/lab',
+      payload: {
+        curveMode: 'EVENT_ADAPTIVE',
+        segments: 99,
+        referencePrice: '150',
+        eventIntensity: '0.7',
+        targetLiquidity: '1',
+        migrationQuoteThreshold: '1',
+        quoteMint: 'mint',
+      },
+    })
+    expect(bad.statusCode).toBe(400)
+  })
+
+  it('lists stored pools', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/pools' })
+    expect(response.statusCode).toBe(200)
+    expect(Array.isArray(response.json().pools)).toBe(true)
+  })
+
   it('validates and prepares an unsigned DBC config', async () => {
     const validate = await app.inject({
       method: 'POST',

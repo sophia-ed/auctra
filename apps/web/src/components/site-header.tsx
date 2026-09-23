@@ -15,7 +15,7 @@ export function SiteHeader() {
             Liquidity for the moments markets change state.
           </span>
         </Link>
-        <nav aria-label="Primary" className="flex items-center gap-5 text-sm">
+        <nav aria-label="Primary" className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
           <Link href="/" className="no-underline" style={{ color: 'var(--muted)' }}>
             Overview
           </Link>
@@ -24,6 +24,15 @@ export function SiteHeader() {
           </Link>
           <Link href="/create" className="no-underline" style={{ color: 'var(--muted)' }}>
             Create
+          </Link>
+          <Link href="/dbc-lab" className="no-underline" style={{ color: 'var(--muted)' }}>
+            DBC Lab
+          </Link>
+          <Link href="/monitor" className="no-underline" style={{ color: 'var(--muted)' }}>
+            Monitor
+          </Link>
+          <Link href="/audit" className="no-underline" style={{ color: 'var(--muted)' }}>
+            Audit
           </Link>
           <a
             href={REPO_URL}
