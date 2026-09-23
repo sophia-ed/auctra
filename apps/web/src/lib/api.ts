@@ -19,7 +19,17 @@ import type {
   TransitionResponse,
 } from './types'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+const PUBLIC_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+/**
+ * Server-side rendering runs inside the web container, where `localhost` is not
+ * the API. `API_INTERNAL_URL` lets compose point SSR at the api service while the
+ * browser keeps using the public URL.
+ */
+const INTERNAL_BASE = process.env.API_INTERNAL_URL ?? PUBLIC_BASE
+
+function baseUrl(): string {
+  return typeof window === 'undefined' ? INTERNAL_BASE : PUBLIC_BASE
+}
 
 export type ApiResult<T> =
   | { ok: true; data: T }
@@ -29,7 +39,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<ApiResult<T
   try {
     const headers: Record<string, string> = { accept: 'application/json' }
     if (init?.body) headers['content-type'] = 'application/json'
-    const response = await fetch(`${API_BASE}${path}`, {
+    const response = await fetch(`${baseUrl()}${path}`, {
       ...init,
       cache: 'no-store',
       headers: { ...headers, ...(init?.headers as Record<string, string> | undefined) },
@@ -108,5 +118,3 @@ export const api = {
   dbcPrepare: (body: DbcPrepareRequest) =>
     request<DbcPrepareResponse>('/api/dbc/prepare', { method: 'POST', body: JSON.stringify(body) }),
 }
-
-export { API_BASE }

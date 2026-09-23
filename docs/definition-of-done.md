@@ -34,6 +34,7 @@ Audited **2026-09-23**. Legend: ✅ done · ⚠️ done with a stated caveat · 
 | Mainnet mode is explicitly gated | ✅ | config throws without `ENABLE_MAINNET=true` |
 | Pool monitoring works | ⚠️ | read path and snapshots work; no pool has been deployed |
 | Docker build works | ✅ | built locally and in CI; API container responded |
+| Docker stack runs end to end | ✅ | `docker compose up`: postgres + api + worker + web; persistence and all web pages verified |
 | CI works | ✅ | install, lint, typecheck, test, build, docker |
 | Tests pass | ✅ | 145 tests across 10 suites |
 | README works from a clean checkout | ✅ | `--frozen-lockfile` install verified |

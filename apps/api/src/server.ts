@@ -22,6 +22,7 @@ import {
   computeFeePolicy,
   computePremium,
   computeTransitionGap,
+  dec,
   deriveLifecycleState,
   getScenarioPreset,
   makeConversionSpec,
@@ -122,6 +123,43 @@ function eventTimestamp(event: LifecycleEvent): number {
 
 function uniformWeights(count: number): Decimal[] {
   return Array.from({ length: count }, () => new Decimal(1).div(count))
+}
+
+/**
+ * Restore Decimals on a plan loaded from a repository.
+ *
+ * The in-memory repository hands back the rich object, while PostgreSQL returns
+ * JSON where `Decimal` values are strings. `dec()` tolerates both, so every
+ * route reads stored plans through this function and behaves identically.
+ */
+function reviveStoredPlan(plan: TransitionPlan): TransitionPlan {
+  const curve = plan.transitionCurve
+  const dbc = plan.dbcPlan
+  return {
+    ...plan,
+    transitionCurve: {
+      ...curve,
+      referencePrice: dec(curve.referencePrice),
+      totalLiquidity: dec(curve.totalLiquidity),
+      points: curve.points.map((point) => ({
+        ...point,
+        price: dec(point.price),
+        weight: dec(point.weight),
+        liquidity: dec(point.liquidity),
+        rawWeight: dec(point.rawWeight),
+        adjustedWeight: dec(point.adjustedWeight),
+        adaptiveFactor: dec(point.adaptiveFactor),
+        distance: dec(point.distance),
+      })),
+    },
+    dbcPlan: {
+      ...dbc,
+      pricePoints: dbc.pricePoints.map((value) => dec(value)),
+      sqrtPrices: dbc.sqrtPrices.map((value) => dec(value)),
+      liquidityWeights: dbc.liquidityWeights.map((value) => dec(value)),
+      migrationQuoteThreshold: dec(dbc.migrationQuoteThreshold),
+    },
+  }
 }
 
 /**
@@ -659,7 +697,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     const record = await deps.repos.plans.get(parsed.data.planId)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
 
-    const plan = record.payload as TransitionPlan
+    const plan = reviveStoredPlan(record.payload as TransitionPlan)
     const simulationPlan = simulateForCurve({
       idPrefix: plan.id,
       pricePoints: plan.dbcPlan.pricePoints,
@@ -695,7 +733,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     if (!deps.dbc) return reply.code(503).send({ error: 'meteora_sdk_unavailable' })
     const record = await deps.repos.plans.get(parsed.data.planId)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
-    const plan = record.payload as TransitionPlan
+    const plan = reviveStoredPlan(record.payload as TransitionPlan)
     const issues = deps.dbc.validateConfig(plan.dbcPlan)
     return { valid: issues.length === 0, issues }
   })
@@ -707,7 +745,7 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     const body = parsed.data
     const record = await deps.repos.plans.get(body.planId)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
-    const plan = record.payload as TransitionPlan
+    const plan = reviveStoredPlan(record.payload as TransitionPlan)
 
     const unsigned = await deps.dbc.createConfig({
       plan: plan.dbcPlan,

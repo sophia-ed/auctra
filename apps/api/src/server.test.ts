@@ -317,6 +317,54 @@ describe('API contract (Section 58)', () => {
     expect(Array.isArray(response.json().pools)).toBe(true)
   })
 
+  it('runs a simulation when plan payloads come back as JSON (Postgres parity)', async () => {
+    const jsonRepos = createInMemoryRepositories()
+    const innerInsert = jsonRepos.plans.insert.bind(jsonRepos.plans)
+    const innerGet = jsonRepos.plans.get.bind(jsonRepos.plans)
+    // Postgres returns jsonb as parsed JSON, so Decimals arrive as strings.
+    jsonRepos.plans.insert = async (record) =>
+      innerInsert({ ...record, payload: JSON.parse(JSON.stringify(record.payload)) })
+    jsonRepos.plans.get = async (id) => {
+      const found = await innerGet(id)
+      return found ? { ...found, payload: JSON.parse(JSON.stringify(found.payload)) } : undefined
+    }
+
+    const jsonApp = await createApiServer({
+      config: loadConfig({ DEMO_MODE: 'true' }),
+      repos: jsonRepos,
+      prestocks,
+      pyth: new MockPythProvider({ symbol: 'SPACEX', price: '150', confidence: '0.07' }),
+      lifecycle: new DemoLifecycleProvider(),
+      now: () => RETRIEVED_AT,
+    })
+    await jsonApp.ready()
+
+    const compile = await jsonApp.inject({
+      method: 'POST',
+      url: '/api/transition/compile',
+      payload: {
+        symbol: 'SPACEX',
+        liquidity: {
+          mode: 'EVENT_ADAPTIVE',
+          segments: 8,
+          referencePrice: '150',
+          targetLiquidity: '250000',
+          quoteMint: 'So11111111111111111111111111111111111111112',
+          migrationQuoteThreshold: '100000',
+        },
+      },
+    })
+    expect(compile.statusCode).toBe(201)
+
+    const simulation = await jsonApp.inject({
+      method: 'POST',
+      url: '/api/simulations',
+      payload: { planId: compile.json().plan.id, scenario: 'NORMAL' },
+    })
+    expect(simulation.statusCode).toBe(201)
+    expect(simulation.json().simulation.comparison.note).toContain('No winner')
+  })
+
   it('validates and prepares an unsigned DBC config', async () => {
     const validate = await app.inject({
       method: 'POST',

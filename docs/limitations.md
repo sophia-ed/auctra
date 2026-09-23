@@ -48,11 +48,15 @@ present in this build, it is stated rather than implied.
 
 ## Persistence and operations
 
-- The Postgres repositories are tested against **`pg-mem`**, an emulator, not a
-  live PostgreSQL server. The SQL is executed, but no production run has been
-  load-tested.
+- The Postgres repositories are verified two ways: SQL unit tests against
+  **`pg-mem`**, and a full `docker compose up` run against **real PostgreSQL 16**
+  where assets, events, plans, plan versions, simulations, source records and
+  audit events all persisted. No load testing has been performed.
 - The API has **no authentication** and is intended for a trusted host.
-- Demo-mode repositories are in-memory: restarting the API clears them.
+- Demo-mode repositories are in-memory: restarting the API clears them (the
+  compose stack uses PostgreSQL, so it persists).
+- Server-side rendering needs an internal API URL (`API_INTERNAL_URL`); the
+  browser uses `NEXT_PUBLIC_API_URL`. Both are set in `docker-compose.yml`.
 
 ## Verification gaps
 
