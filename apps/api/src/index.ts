@@ -31,7 +31,9 @@ export async function main(): Promise<void> {
   }
 
   const prestocks = new HttpPreStocksProvider({ baseUrl: config.prestocksApiUrl })
-  const pyth = new HttpPythProvider({ baseUrl: config.pythHermesUrl })
+  // Live references only when a key is present; without one the reference is
+  // reported as unavailable rather than faked.
+  const pyth = new HttpPythProvider({ baseUrl: config.pythHermesUrl, apiKey: config.pythApiKey })
   const lifecycle = config.demoMode
     ? new DemoLifecycleProvider()
     : new PreStocksLifecycleProvider({ baseUrl: 'https://www.prestocks.com' })

@@ -27,6 +27,13 @@ export class PythObservationUnavailableError extends Error {
   }
 }
 
+export class PythAuthError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'PythAuthError'
+  }
+}
+
 export interface MarketAsset {
   symbol: string
 }
@@ -97,7 +104,6 @@ export async function discoverFeeds(
   if (!Array.isArray(json)) {
     throw new PythUnavailableError('Pyth feed discovery did not return an array')
   }
-
   return json.flatMap((raw) => {
     const parsed = discoveryItemSchema.safeParse(raw)
     if (!parsed.success) return []
@@ -113,6 +119,92 @@ export async function discoverFeeds(
       },
     ]
   })
+}
+
+// --- Keyed Hermes latest updates (Pyth Core) ----------------------------------
+
+const latestUpdateSchema = z.object({
+  parsed: z.array(
+    z.object({
+      id: z.string().min(1),
+      price: z.object({
+        price: z.union([z.string(), z.number()]),
+        conf: z.union([z.string(), z.number()]),
+        expo: z.number(),
+        publish_time: z.number(),
+      }),
+      metadata: z
+        .object({
+          slot: z.number().optional(),
+          proof_available_time: z.number().optional(),
+          prev_publish_time: z.number().optional(),
+        })
+        .partial()
+        .optional(),
+    }),
+  ),
+})
+
+/**
+ * Fetch the latest update for a feed (Hermes, keyed).
+ *
+ * Auth is `Authorization: Bearer <key>`. Hermes Core returns price, confidence,
+ * exponent and publish_time; it does NOT provide a market session or a
+ * feed-update timestamp, so `marketSession` stays undefined and freshness is
+ * derived from `publishTime` (Section 14).
+ */
+export async function fetchLatestObservation(
+  feed: { feedId: string; pythSymbol: string },
+  options: { baseUrl?: string; fetchImpl?: typeof fetch; apiKey: string },
+): Promise<ReferenceObservation> {
+  if (!options.apiKey) {
+    throw new PythAuthError('a Pyth API key is required for live updates')
+  }
+  const baseUrl = options.baseUrl ?? DEFAULT_PYTH_HERMES_URL
+  const fetchImpl = options.fetchImpl ?? fetch
+  const id = feed.feedId.startsWith('0x') ? feed.feedId : `0x${feed.feedId}`
+  const url = `${baseUrl}/v2/updates/price/latest?ids%5B%5D=${encodeURIComponent(id)}`
+
+  let response: Response
+  try {
+    response = await fetchImpl(url, {
+      headers: { accept: 'application/json', authorization: `Bearer ${options.apiKey}` },
+    })
+  } catch (error) {
+    throw new PythUnavailableError(
+      `Pyth latest update failed: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new PythAuthError(`Pyth rejected the API key (HTTP ${response.status})`)
+  }
+  if (!response.ok) {
+    throw new PythUnavailableError(`Pyth latest update returned HTTP ${response.status}`)
+  }
+
+  const json: unknown = await response.json()
+  const parsed = latestUpdateSchema.safeParse(json)
+  if (!parsed.success) {
+    throw new PythUnavailableError('Pyth latest update did not match the expected shape')
+  }
+  const item = parsed.data.parsed.find(
+    (candidate) => candidate.id.replace(/^0x/, '') === feed.feedId.replace(/^0x/, ''),
+  )
+  if (!item) {
+    throw new PythObservationUnavailableError(`Pyth returned no update for ${feed.pythSymbol}`)
+  }
+
+  return {
+    feedId: item.id.replace(/^0x/, ''),
+    symbol: feed.pythSymbol,
+    price: mantissaToDecimal(item.price.price, item.price.expo),
+    confidence: mantissaToDecimal(item.price.conf, item.price.expo),
+    exponent: item.price.expo,
+    publishTime: new Date(item.price.publish_time * 1000).toISOString(),
+    feedUpdateTimestamp: undefined,
+    marketSession: undefined,
+    source: 'pyth',
+  }
 }
 
 // --- Pyth Pro / push payload parsing ----------------------------------------
@@ -168,6 +260,8 @@ export interface HttpPythProviderOptions {
   fetchImpl?: typeof fetch
   /** Resolves a live observation for a feed using your authenticated Pyth source. */
   fetchObservation?: (feed: PythFeedRegistryEntry) => Promise<ReferenceObservation>
+  /** Optional key for Hermes; enables the built-in keyed fetch when fetchObservation is not set. */
+  apiKey?: string
 }
 
 /** Prefer the 24/7 index feed for a private asset, otherwise the first verified feed. */
@@ -188,11 +282,13 @@ export class HttpPythProvider implements MarketReferenceProvider {
   private readonly baseUrl: string
   private readonly fetchImpl: typeof fetch
   private readonly fetchObservation?: (feed: PythFeedRegistryEntry) => Promise<ReferenceObservation>
+  private readonly apiKey?: string
 
   constructor(options: HttpPythProviderOptions = {}) {
     this.baseUrl = options.baseUrl ?? DEFAULT_PYTH_HERMES_URL
     this.fetchImpl = options.fetchImpl ?? fetch
     this.fetchObservation = options.fetchObservation
+    this.apiKey = options.apiKey
   }
 
   async getReference(asset: MarketAsset): Promise<ReferenceObservation> {
@@ -201,15 +297,17 @@ export class HttpPythProvider implements MarketReferenceProvider {
       throw new PythUnavailableError(`No verified Pyth feed for ${asset.symbol}`)
     }
 
-    if (!this.fetchObservation) {
-      throw new PythObservationUnavailableError(
-        `Pyth feed for ${asset.symbol} resolved as ${feed.pythSymbol} (${feed.feedId}), but live updates ` +
-          `require an authenticated source. Provide fetchObservation or configure PYTH_API_KEY. ` +
-          `Discovery at ${this.baseUrl}/v2/price_feeds remains available keyless.`,
-      )
+    if (this.fetchObservation) {
+      return this.fetchObservation(feed)
     }
-
-    return this.fetchObservation(feed)
+    if (this.apiKey) {
+      return fetchLatestObservation(feed, { baseUrl: this.baseUrl, fetchImpl: this.fetchImpl, apiKey: this.apiKey })
+    }
+    throw new PythObservationUnavailableError(
+      `Pyth feed for ${asset.symbol} resolved as ${feed.pythSymbol} (${feed.feedId}), but live updates ` +
+        `require an authenticated source. Provide fetchObservation or configure PYTH_API_KEY. ` +
+        `Discovery at ${this.baseUrl}/v2/price_feeds remains available keyless.`,
+    )
   }
 
   /** Discover feeds by symbol using the keyless endpoint. */

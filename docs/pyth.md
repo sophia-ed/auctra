@@ -13,10 +13,24 @@ market session and feed freshness — not a single number treated as truth.
 | `GET /v2/updates/price/latest` | API key required (`401` observed without one) |
 | Pyth Pro stream | subscription |
 
-`HttpPythProvider` performs keyless discovery, and requires an injected
-`fetchObservation` (or `PYTH_API_KEY`) to produce a live price. Without it,
-`getReference` fails with an actionable error instead of inventing a value. The
-worker simply omits the reference stage when no key is configured.
+`HttpPythProvider` performs keyless discovery, and produces a live price when an
+API key is present (`PYTH_API_KEY`), via `fetchLatestObservation` (a real Hermes
+call using `Authorization: Bearer <key>`). Without a key, `getReference` fails
+with an actionable error instead of inventing a value. The worker simply omits
+the reference stage when no key is configured.
+
+### Keyed update path
+
+```text
+GET {baseUrl}/v2/updates/price/latest?ids[]=<feed id>
+Authorization: Bearer <key>
+```
+
+Response `parsed[]` entries carry `price { price, conf, expo, publish_time }` and
+`metadata`. Note: **Hermes Core does not provide a market session or a feed-update
+timestamp** — those are Pyth Pro fields. So `marketSession` is `undefined` and
+freshness is derived from `publish_time`, which is exactly what Section 14 warns
+about: never assume the latest payload is freshly generated.
 
 ## Reference model (Section 14)
 

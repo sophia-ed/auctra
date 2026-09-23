@@ -9,7 +9,7 @@ Audited **2026-09-23**. Legend: ✅ done · ⚠️ done with a stated caveat · 
 | Lifecycle state machine works | ✅ | `packages/domain/src/lifecycle/`, 7 tests |
 | Corporate-action events work | ✅ | `events.ts`, disclosure parser, providers |
 | Source registry works | ✅ | `provenance/registry.ts`, conflict detection |
-| Pyth integration works | ⚠️ | discovery is keyless and live; price updates need an authenticated source (`PYTH_API_KEY`) |
+| Pyth integration works | ✅ | discovery keyless and live; updates fetched live when `PYTH_API_KEY` is set, otherwise reported `UNCONFIGURED` |
 | Price confidence works | ✅ | `confidenceBps = confidence/price × 10,000` |
 | Feed freshness works | ✅ | `feedUpdateTimestamp` origin; 60/300 s thresholds |
 | Market session works | ✅ | Pyth `marketSession` used directly |

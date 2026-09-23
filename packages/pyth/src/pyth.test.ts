@@ -130,4 +130,43 @@ describe('reference providers (Section 13)', () => {
       PythUnavailableError,
     )
   })
+
+  it('fetches a live observation through the keyed Hermes path', async () => {
+    const body = {
+      parsed: [
+        {
+          id: '96d4bb23a3db78fdb72b3a03ce80ead686096f324319166534d9a27c0519c483',
+          price: { price: '102500000000', conf: '1200000', expo: -8, publish_time: 1790177000 },
+          metadata: {},
+        },
+      ],
+    }
+    let seenAuth = ''
+    let seenUrl = ''
+    const fetchImpl = (async (url: string, init: { headers: Record<string, string> }) => {
+      seenUrl = url
+      seenAuth = init.headers.authorization
+      return new Response(JSON.stringify(body), { status: 200 })
+    }) as unknown as typeof fetch
+
+    const provider = new HttpPythProvider({ fetchImpl, apiKey: 'test-key' })
+    const observation = await provider.getReference({ symbol: 'OPENAI' })
+
+    expect(observation.source).toBe('pyth')
+    expect(observation.price.gt(0)).toBe(true)
+    expect(seenAuth).toBe('Bearer test-key')
+    expect(seenUrl).toContain('0x96d4bb23')
+    expect(observation.marketSession).toBeUndefined()
+  })
+
+  it('rejects without an API key for live updates', async () => {
+    const provider = new HttpPythProvider()
+    await expect(provider.getReference({ symbol: 'OPENAI' })).rejects.toThrowError()
+  })
+
+  it('maps a 401 to a PythAuthError', async () => {
+    const fetchImpl = (async () => new Response('unauthorized', { status: 401 })) as unknown as typeof fetch
+    const provider = new HttpPythProvider({ fetchImpl, apiKey: 'bad-key' })
+    await expect(provider.getReference({ symbol: 'OPENAI' })).rejects.toThrowError(/rejected the API key/)
+  })
 })

@@ -32,8 +32,11 @@ present in this build, it is stated rather than implied.
 - **Only 3 of 8 current PreStocks have a Pyth reference** (OPENAI, ANTHROPIC,
   SPCX). For the rest, the transition gap is `NOT COMPUTABLE` and the comparison
   is `UNAVAILABLE`.
-- **Live Pyth updates require an authenticated source.** Without a key the
-  reference is reported as unavailable; discovery remains keyless.
+- **Live Pyth updates require an API key.** With `PYTH_API_KEY` set, references
+  are fetched from Hermes with a Bearer token. Without it, the reference is
+  reported as unavailable; discovery remains keyless. Note that Hermes Core does
+  not expose a market session or feed-update timestamp (those are Pyth Pro
+  fields), so session is shown as `UNKNOWN` and freshness uses `publish_time`.
 - **SpaceX has no published numeric conversion ratio** (swap-or-expire), so its
   gap cannot be computed. The xAI ratio (`0.7165`) is published and is used as the
   worked example.

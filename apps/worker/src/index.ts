@@ -29,12 +29,7 @@ export async function main(): Promise<void> {
   // Live references require an authenticated Pyth source; without a key the
   // worker simply does not perform the reference stage.
   const pyth = config.pythApiKey
-    ? new HttpPythProvider({
-        baseUrl: config.pythHermesUrl,
-        fetchObservation: async () => {
-          throw new Error('wire the authenticated Pyth observation source before enabling references')
-        },
-      })
+    ? new HttpPythProvider({ baseUrl: config.pythHermesUrl, apiKey: config.pythApiKey })
     : undefined
 
   const intervalMs = Number(process.env.WORKER_INTERVAL_MS ?? 60000)
