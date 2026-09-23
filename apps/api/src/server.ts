@@ -11,17 +11,22 @@ import {
 import {
   Decimal,
   buildTransitionDossier,
+  buildTransitionTimeline,
   compileTransitionPlan,
   compareToBaseline,
+  computeClockModel,
   computePremium,
   computeTransitionGap,
   deriveLifecycleState,
   getScenarioPreset,
   makeConversionSpec,
+  reduceLifecycle,
   toJsonValue,
   type AssetReference,
   type LifecycleEvent,
   type LifecycleEventType,
+  type MarketSession,
+  type Freshness,
   type SimulationConfig,
   type SimulationPlan,
   type SourceType,
@@ -278,6 +283,65 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
         message: error instanceof Error ? error.message : 'unknown',
       })
     }
+  })
+
+  // --- lifecycle ------------------------------------------------------------
+
+  app.get<{ Params: { symbol: string } }>('/api/lifecycle/:symbol', async (request, reply) => {
+    await ensureAssets()
+    const asset = deps.repos.assets.getBySymbol(request.params.symbol)
+    if (!asset) return reply.code(404).send({ error: 'asset_not_found' })
+
+    const events = await ensureEvents(asset)
+    const asOf = now()
+    const result = reduceLifecycle(events, asOf)
+
+    return {
+      symbol: asset.symbol,
+      asOf,
+      state: result.state,
+      transitions: result.transitions,
+      issues: result.issues,
+      timeline: buildTransitionTimeline(events, asOf),
+      events,
+    }
+  })
+
+  // --- clocks ---------------------------------------------------------------
+
+  app.get<{ Params: { symbol: string } }>('/api/clocks/:symbol', async (request, reply) => {
+    await ensureAssets()
+    const asset = deps.repos.assets.getBySymbol(request.params.symbol)
+    if (!asset) return reply.code(404).send({ error: 'asset_not_found' })
+
+    const events = await ensureEvents(asset)
+    const asOf = now()
+    const state = deriveLifecycleState(events, asOf)
+
+    let marketSession: MarketSession | undefined
+    let referenceFreshness: Freshness | undefined
+    if (deps.pyth) {
+      try {
+        const observation = await deps.pyth.getReference({ symbol: asset.symbol })
+        marketSession = observation.marketSession
+        referenceFreshness = computeFreshness({
+          now: asOf,
+          feedUpdateTimestamp: observation.feedUpdateTimestamp,
+          publishTime: observation.publishTime,
+        }).status
+      } catch {
+        marketSession = undefined
+      }
+    }
+
+    const clocks = computeClockModel({
+      asOf,
+      lifecycleState: state,
+      marketSession,
+      referenceFreshness,
+      mainnetEnabled: deps.config.enableMainnet,
+    })
+    return toJsonValue(clocks)
   })
 
   // --- transitions ----------------------------------------------------------

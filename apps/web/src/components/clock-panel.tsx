@@ -1,3 +1,4 @@
+import type { ClockModelJson } from '@/lib/types'
 import { StatusBadge } from './status-badge'
 
 export interface ClockReading {
@@ -27,4 +28,16 @@ export function ClockPanel({ readings }: { readings: ClockReading[] }) {
       ))}
     </div>
   )
+}
+
+export function toClockReadings(model: ClockModelJson): ClockReading[] {
+  return [model.private, model.public, model.onchain, model.transition].map((reading) => ({
+    label: reading.label,
+    status: reading.status,
+    detail: reading.detail,
+  }))
+}
+
+export function ClockModelPanel({ model }: { model: ClockModelJson }) {
+  return <ClockPanel readings={toClockReadings(model)} />
 }

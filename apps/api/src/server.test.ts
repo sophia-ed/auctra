@@ -128,6 +128,26 @@ describe('API contract (Section 58)', () => {
     expect(missing.statusCode).toBe(404)
   })
 
+  it('derives lifecycle state and a timeline for an asset', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/lifecycle/SPACEX' })
+    expect(response.statusCode).toBe(200)
+    const body = response.json()
+    expect(body.state).toBe('PUBLIC_TRANSITION')
+    expect(body.events.length).toBeGreaterThan(0)
+    expect(body.timeline.length).toBeGreaterThan(0)
+    expect(body.transitions[0]).toHaveProperty('previousState')
+  })
+
+  it('exposes the dual-clock model', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/clocks/SPACEX' })
+    expect(response.statusCode).toBe(200)
+    const body = response.json()
+    expect(body.private.status).toBe('CLOSED')
+    expect(body.public.status).toBe('ACTIVE')
+    expect(body.onchain.status).toBe('LIVE')
+    expect(body.transition.status).toBe('PENDING')
+  })
+
   it('validates event input', async () => {
     const bad = await app.inject({
       method: 'POST',

@@ -85,8 +85,11 @@ dilute it.
 | 36-38 Simulation, scenarios, baseline | `packages/domain/src/simulation/`, `apps/api` `/api/simulations` |
 | 39 Historical replay | `packages/domain/src/replay/replay.ts` |
 | 40 Transition timeline | `packages/domain/src/reporting/timeline.ts` |
-| 41 Market clock visualization | `packages/domain/src/clocks/clocks.ts` |
-| 42-44, 50, 51, 54, 56, 57 Web routes/wallet | not started (web UI phase) |
+| 41 Market clock visualization | `packages/domain/src/clocks/clocks.ts`, `apps/web/src/components/clock-panel.tsx` |
+| 42 Asset page | `apps/web/src/app/assets/[symbol]/page.tsx` (`/api/lifecycle`, `/api/clocks`, `/api/reference`) |
+| 43 Transition page | `apps/web/src/app/transition/[id]/page.tsx` |
+| 44 Transition plan builder | `apps/web/src/app/create/page.tsx`, `apps/web/src/components/plan-builder.tsx` |
+| 50, 51, 54, 56, 57 Data audit, monitor, DBC lab, explorer, wallet | not started (next bits) |
 | 45 Policy explanation | `packages/domain/src/policy/explanation.ts` |
 | 46 Policy JSON | `packages/domain/src/plan/serialize.ts` |
 | 47 Reproducibility | `packages/domain/src/math/hash.ts`, `plan/compile.ts` |

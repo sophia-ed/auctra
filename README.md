@@ -27,11 +27,11 @@ built yet.
 | `@auctra/meteora` — DBC adapter, validation, migration status, version guard | done (15 tests) |
 | `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
 | `@auctra/database` — Postgres schema + repository layer | done (6 tests) |
-| `@auctra/api` — typed backend (Section 58 routes) | done (10 tests) |
-| `@auctra/web` — Next.js app | started (foundation + landing page) |
+| `@auctra/api` — typed backend (Section 58 routes) | done (12 tests) |
+| `@auctra/web` — Next.js app | asset list/detail (§42), transition dossier (§43), plan builder (§44) |
 | `apps/worker` | not started |
 
-124 tests, clean typecheck across all packages.
+126 tests, clean typecheck across all packages.
 
 ### Running the API
 

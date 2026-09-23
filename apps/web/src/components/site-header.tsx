@@ -19,6 +19,12 @@ export function SiteHeader() {
           <Link href="/" className="no-underline" style={{ color: 'var(--muted)' }}>
             Overview
           </Link>
+          <Link href="/assets" className="no-underline" style={{ color: 'var(--muted)' }}>
+            Assets
+          </Link>
+          <Link href="/create" className="no-underline" style={{ color: 'var(--muted)' }}>
+            Create
+          </Link>
           <a
             href={REPO_URL}
             className="no-underline"
