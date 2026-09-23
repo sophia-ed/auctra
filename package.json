@@ -1,0 +1,15 @@
+{
+  "name": "auctra",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.5.1",
+  "engines": {
+    "node": ">=20.9"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "verify:versions": "node scripts/verify-versions.mjs"
+  }
+}
