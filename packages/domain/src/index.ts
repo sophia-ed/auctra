@@ -83,6 +83,7 @@ export {
   type SourceRecordType,
   makeSourceRecord,
 } from './provenance/source'
+export { SourceRegistry, SourceConflictError } from './provenance/registry'
 
 export {
   type Scenario,

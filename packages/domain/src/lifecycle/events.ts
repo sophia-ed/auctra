@@ -25,6 +25,12 @@ export interface LifecycleEvent {
   announcedAt?: string
   effectiveAt?: string
   conversionDeadline?: string
+  /**
+   * When Auctra first observed the disclosure. Used as a labelled anchor when
+   * the issuer does not publish an announcement/effective time. Never presented
+   * as the issuer's own date (Section 4: do not invent event dates).
+   */
+  observedAt?: string
   sourceUrl?: string
   sourceType: SourceType
   /** 0..1 */
@@ -53,11 +59,19 @@ export function validateLifecycleEvent(event: LifecycleEvent): DataQualityIssue[
   if (!event.assetId) push('MISSING_ASSET_ID', 'event has no assetId', 'assetId')
   if (!event.title) push('MISSING_TITLE', 'event has no title', 'title')
 
-  for (const field of ['announcedAt', 'effectiveAt', 'conversionDeadline'] as const) {
+  for (const field of ['announcedAt', 'effectiveAt', 'conversionDeadline', 'observedAt'] as const) {
     const value = event[field]
     if (value !== undefined && parseIso(value) === null) {
       push('INVALID_TIMESTAMP', `${field} is not a valid ISO timestamp`, field)
     }
+  }
+
+  if (event.observedAt && !event.announcedAt) {
+    push(
+      'ANNOUNCEMENT_TIME_OBSERVED',
+      'the issuer did not publish an announcement time; the observation time is used as a labelled anchor',
+      'observedAt',
+    )
   }
 
   if (!Number.isFinite(event.confidence) || event.confidence < 0 || event.confidence > 1) {
@@ -72,7 +86,7 @@ export function validateLifecycleEvent(event: LifecycleEvent): DataQualityIssue[
     )
   }
 
-  if (!event.announcedAt && !event.effectiveAt && !event.conversionDeadline) {
+  if (!event.announcedAt && !event.effectiveAt && !event.conversionDeadline && !event.observedAt) {
     push('NO_TIMESTAMPS', 'event has no usable timestamp', 'announcedAt')
   }
 
@@ -97,10 +111,13 @@ export function normalizeLifecycleEvents(events: readonly LifecycleEvent[]): Lif
       announcedAt: toIsoIfValid(event.announcedAt),
       effectiveAt: toIsoIfValid(event.effectiveAt),
       conversionDeadline: toIsoIfValid(event.conversionDeadline),
+      observedAt: toIsoIfValid(event.observedAt),
     }))
     .sort((a, b) => {
-      const at = Date.parse(a.announcedAt ?? a.effectiveAt ?? a.conversionDeadline ?? '') || 0
-      const bt = Date.parse(b.announcedAt ?? b.effectiveAt ?? b.conversionDeadline ?? '') || 0
+      const at =
+        Date.parse(a.announcedAt ?? a.observedAt ?? a.effectiveAt ?? a.conversionDeadline ?? '') || 0
+      const bt =
+        Date.parse(b.announcedAt ?? b.observedAt ?? b.effectiveAt ?? b.conversionDeadline ?? '') || 0
       if (at !== bt) return at - bt
       return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
     })

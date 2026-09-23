@@ -19,13 +19,14 @@ built yet.
 | Layer | State |
 |---|---|
 | Originality audit + pinned versions | done — [`docs/originality.md`](./docs/originality.md), [`docs/research/`](./docs/research/README.md), [`docs/sdk-versions.md`](./docs/sdk-versions.md) |
+| Sections 1–10 (tracks, thesis, data integrity, ingestion, asset model, premium, lifecycle, corporate actions, real examples) | done — see [`docs/tracks.md`](./docs/tracks.md) |
 | `@auctra/domain` — lifecycle, transition, policy, plan, simulation | done (37 tests) |
-| `@auctra/prestocks` — PreStocks provider + normalization | done (5 tests) |
+| `@auctra/prestocks` — asset provider, normalization, lifecycle providers | done (15 tests) |
 | `@auctra/pyth` — reference model, freshness, feed registry, discovery | done (12 tests) |
 | `@auctra/meteora` — DBC adapter, validation, version guard | done (8 tests) |
 | `@auctra/database`, `apps/web`, `apps/api`, `apps/worker` | not started |
 
-62 tests, clean typecheck across all packages.
+72 tests, clean typecheck across all packages.
 
 Nothing here is investment advice. Auctra produces analysis and proposed
 configurations; it does not custody assets and does not submit transactions

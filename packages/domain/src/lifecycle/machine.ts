@@ -56,11 +56,12 @@ function addSeconds(iso: string, seconds: number): string {
  * Expand one event into (timestamp, state) entries.
  *
  * Rules (documented, deterministic):
- *  - the announcement edge is at `announcedAt`, falling back to `effectiveAt`
- *    so a partially-specified event never jumps straight to a later state;
- *  - CONVERSION / ACQUISITION become CONVERSION_OPEN at `effectiveAt`;
+ *  - the announcement edge is at `announcedAt`, falling back to the observation
+ *    time, then `effectiveAt`, so a partially-specified event never jumps
+ *    straight to a later state;
+ *  - CONVERSION / ACQUISITION become CONVERSION_OPEN at the effective time;
  *  - IPO / MERGER / CORPORATE_ACTION / CUSTOM become PUBLIC_TRANSITION at
- *    `effectiveAt`;
+ *    the effective time;
  *  - EXPIRATION announces EXPIRING and expires at `effectiveAt`;
  *  - any event with a `conversionDeadline` becomes EXPIRING one window before
  *    the deadline and EXPIRED at the deadline;
@@ -78,27 +79,42 @@ export function eventTimeline(
     entries.push({ at, state, reason, event })
   }
 
-  const announceAt = event.announcedAt ?? event.effectiveAt ?? event.conversionDeadline
-  push(announceAt, LifecycleState.EVENT_ANNOUNCED, `${event.type} announced: ${event.title}`)
+  const deadlineMs = parseMs(event.conversionDeadline)
+  // An observation timestamp is capped to the start of the expiring window so a
+  // disclosure learned late does not produce a backwards or implausible chain.
+  let observedMs = parseMs(event.observedAt)
+  if (observedMs !== undefined && deadlineMs !== undefined) {
+    const windowStartMs = deadlineMs - config.expiringWindowSeconds * 1000
+    if (observedMs > windowStartMs) observedMs = windowStartMs
+  }
+  const observedIso = observedMs === undefined ? undefined : new Date(observedMs).toISOString()
 
+  const announceAt = event.announcedAt ?? observedIso ?? event.effectiveAt ?? event.conversionDeadline
+  const announceBasis = event.announcedAt ? '' : observedIso ? ' (observation time)' : ''
+  push(announceAt, LifecycleState.EVENT_ANNOUNCED, `${event.type} announced: ${event.title}${announceBasis}`)
+
+  const effectiveAt = event.effectiveAt ?? observedIso
   switch (event.type) {
     case 'CONVERSION':
     case 'ACQUISITION':
-      push(event.effectiveAt, LifecycleState.CONVERSION_OPEN, `${event.type} effective: conversion window open`)
+      push(effectiveAt, LifecycleState.CONVERSION_OPEN, `${event.type} effective: conversion window open`)
       break
     case 'IPO':
     case 'MERGER':
     case 'CORPORATE_ACTION':
     case 'CUSTOM':
-      push(event.effectiveAt, LifecycleState.PUBLIC_TRANSITION, `${event.type} effective: public transition in effect`)
+      push(effectiveAt, LifecycleState.PUBLIC_TRANSITION, `${event.type} effective: public transition in effect`)
       break
     case 'EXPIRATION':
-      push(event.announcedAt ?? event.effectiveAt, LifecycleState.EXPIRING, 'expiration announced: deadline approaching')
-      push(event.effectiveAt, LifecycleState.EXPIRED, 'expiration effective')
+      push(
+        event.announcedAt ?? observedIso ?? event.effectiveAt,
+        LifecycleState.EXPIRING,
+        'expiration announced: deadline approaching',
+      )
+      push(effectiveAt, LifecycleState.EXPIRED, 'expiration effective')
       break
   }
 
-  const deadlineMs = parseMs(event.conversionDeadline)
   if (deadlineMs !== undefined) {
     entries.push({
       at: deadlineMs - config.expiringWindowSeconds * 1000,
@@ -114,9 +130,9 @@ export function eventTimeline(
     })
   }
 
-  if (event.effectiveAt && !event.conversionDeadline) {
+  if (effectiveAt && !event.conversionDeadline) {
     push(
-      addSeconds(event.effectiveAt, config.postEventDelaySeconds),
+      addSeconds(effectiveAt, config.postEventDelaySeconds),
       LifecycleState.POST_EVENT,
       'post-event settlement window',
     )
@@ -144,7 +160,19 @@ export function reduceLifecycle(
   if (Number.isNaN(asOfMs)) throw new Error('reduceLifecycle: invalid asOf timestamp')
 
   const sorted = normalizeLifecycleEvents(events)
-  const issues = sorted.flatMap(validateLifecycleEvent)
+  const issues = sorted.flatMap((event) => {
+    const eventIssues = validateLifecycleEvent(event)
+    if (event.observedAt && !event.effectiveAt) {
+      eventIssues.push({
+        code: 'EVENT_TIME_OBSERVED',
+        message:
+          'the issuer did not publish an effective time; the observation time is used as a labelled anchor',
+        field: 'effectiveAt',
+        eventId: event.id,
+      })
+    }
+    return eventIssues
+  })
 
   const allEntries = sorted.flatMap((event) => eventTimeline(event, config))
   const entries = allEntries
@@ -152,7 +180,10 @@ export function reduceLifecycle(
     .sort(
       (a, b) =>
         a.at - b.at ||
-        STATE_RANK[b.state] - STATE_RANK[a.state] ||
+        // Ascending rank at the same instant keeps the derived chain plausible
+        // (e.g. EVENT_ANNOUNCED before CONVERSION_OPEN before EXPIRING) while
+        // still ending on the most advanced state.
+        STATE_RANK[a.state] - STATE_RANK[b.state] ||
         (a.event.id < b.event.id ? -1 : a.event.id > b.event.id ? 1 : 0),
     )
 
