@@ -14,6 +14,7 @@ import type {
   PoolJson,
   PoolResponse,
   ReferenceResponse,
+  ReplayResponse,
   SimulateResponse,
   StatusResponse,
   TransitionResponse,
@@ -121,4 +122,6 @@ export const api = {
     request<LabResponse>('/api/dbc/lab', { method: 'POST', body: JSON.stringify(body) }),
   dbcPrepare: (body: DbcPrepareRequest) =>
     request<DbcPrepareResponse>('/api/dbc/prepare', { method: 'POST', body: JSON.stringify(body) }),
+  replay: (body: { planId: string; scenario?: string }) =>
+    request<ReplayResponse>('/api/replay', { method: 'POST', body: JSON.stringify(body) }),
 }

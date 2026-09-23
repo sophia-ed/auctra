@@ -113,8 +113,26 @@ export const dbcLabRequestSchema = z.object({
     .optional(),
 })
 
+export const replayRequestSchema = z.object({
+  planId: z.string().min(1),
+  scenario: z
+    .enum([
+      'NORMAL',
+      'IPO_ANNOUNCED',
+      'IPO_IMMINENT',
+      'PUBLIC_MARKET_OPENS',
+      'PUBLIC_MARKET_PRICE_GAP',
+      'HIGH_REFERENCE_UNCERTAINTY',
+      'CONVERSION_DEADLINE_APPROACHING',
+      'ACQUISITION_EVENT',
+      'NO_TARGET_ASSET',
+    ])
+    .optional(),
+})
+
 export type EventRequest = z.infer<typeof eventRequestSchema>
 export type CompileRequest = z.infer<typeof compileRequestSchema>
 export type SimulationRequest = z.infer<typeof simulationRequestSchema>
 export type DbcPrepareRequest = z.infer<typeof dbcPrepareRequestSchema>
 export type DbcLabRequest = z.infer<typeof dbcLabRequestSchema>
+export type ReplayRequest = z.infer<typeof replayRequestSchema>

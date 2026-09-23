@@ -243,6 +243,7 @@ export interface CompileResponse {
 export interface TransitionResponse {
   plan: PlanJson
   versions: { version: number; inputHash: string; outputHash: string }[]
+  comparison?: ReferenceComparisonJson | null
 }
 
 export interface TradeResultJson {
@@ -482,4 +483,40 @@ export interface DbcPrepareResponse {
   requiresWalletSignature: boolean
   network: string
   note: string
+}
+
+export interface ReferenceComparisonJson {
+  status: string
+  reason?: string
+  transformation?: string
+  sourceValue?: string
+  conversionRatio?: string
+  normalizedSourceValue?: string
+  targetReference?: string
+  difference?: string
+  differenceBps?: number
+}
+
+export interface ReplayPointJson {
+  phase: string
+  timestamp: string
+  label: string
+  value: string
+  provenance: string
+  lifecycleState: string
+}
+
+export interface ReplayResultJson {
+  eventEffectiveAt?: string
+  phases: {
+    PRE_EVENT: ReplayPointJson[]
+    EVENT: ReplayPointJson[]
+    POST_EVENT: ReplayPointJson[]
+  }
+  provenanceSummary: string
+  note: string
+}
+
+export interface ReplayResponse {
+  replay: ReplayResultJson
 }

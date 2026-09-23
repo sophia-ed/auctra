@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { ApiError } from '@/components/api-error'
 import { ClockModelPanel } from '@/components/clock-panel'
 import { CurveChart } from '@/components/curve-chart'
+import { LiquidityGapView } from '@/components/liquidity-gap'
 import { RunSimulation } from '@/components/run-simulation'
 import { DataRow, EmptyNote, Section } from '@/components/section'
 import { StatusBadge } from '@/components/status-badge'
@@ -42,7 +43,7 @@ export default async function TransitionPage({ params }: { params: Promise<{ id:
     return <ApiError error={result.error} message={result.message} />
   }
 
-  const { plan, versions } = result.data
+  const { plan, versions, comparison } = result.data
   const symbol = plan.sourceAsset.symbol
   const [lifecycleResult, clocksResult, configResult] = await Promise.all([
     api.lifecycle(symbol),
@@ -189,6 +190,24 @@ export default async function TransitionPage({ params }: { params: Promise<{ id:
         </Section>
       </div>
 
+      {comparison ? (
+        <Section id="comparison" title="Reference comparison (Section 52)">
+          {comparison.status === 'COMPARABLE' ? (
+            <div>
+              <DataRow label="Transformation" value={comparison.transformation ?? '—'} mono={false} />
+              <DataRow label="Normalized source value" value={formatNumber(comparison.normalizedSourceValue, 4)} />
+              <DataRow label="Target reference" value={formatNumber(comparison.targetReference, 4)} />
+              <DataRow
+                label="Difference"
+                value={`${formatNumber(comparison.difference, 4)} · ${formatBps(comparison.differenceBps)}`}
+              />
+            </div>
+          ) : (
+            <EmptyNote>{comparison.reason ?? 'Comparison unavailable'}</EmptyNote>
+          )}
+        </Section>
+      ) : null}
+
       <Section id="liquidity" title="Liquidity">
         <div className="grid gap-x-8 lg:grid-cols-2">
           <div>
@@ -211,8 +230,15 @@ export default async function TransitionPage({ params }: { params: Promise<{ id:
             <DataRow label="Proposed activation" value={`${plan.dbcPlan.activation.type}${plan.dbcPlan.activation.timestamp ? ` · ${plan.dbcPlan.activation.timestamp}` : ''}`} mono={false} />
           </div>
         </div>
-        <div className="mt-4">
-          <Explanations items={plan.liquidityPlan.explanation} />
+        <div className="mt-4 grid gap-5 lg:grid-cols-2">
+          <div>
+            <p className="label mb-2">Liquidity gap view (Section 53)</p>
+            <LiquidityGapView liquidity={plan.liquidityPlan} />
+          </div>
+          <div>
+            <p className="label mb-2">Policy explanation (Section 45)</p>
+            <Explanations items={plan.liquidityPlan.explanation} />
+          </div>
         </div>
       </Section>
 

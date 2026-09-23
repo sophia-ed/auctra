@@ -14,6 +14,7 @@ import {
   buildLiquidityPlan,
   buildTransitionCurve,
   buildTransitionDossier,
+  buildReferenceComparison,
   buildTransitionTimeline,
   compileTransitionPlan,
   compareToBaseline,
@@ -27,6 +28,7 @@ import {
   getScenarioPreset,
   makeConversionSpec,
   reduceLifecycle,
+  replayTransition,
   toJsonValue,
   type AssetReference,
   type CurveMode,
@@ -55,6 +57,7 @@ import {
   dbcPrepareRequestSchema,
   dbcValidateRequestSchema,
   eventRequestSchema,
+  replayRequestSchema,
   simulationRequestSchema,
 } from './schemas'
 
@@ -677,13 +680,27 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     const record = await deps.repos.plans.get(request.params.id)
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
     const versions = await deps.repos.plans.listVersions(record.id)
+    const plan = reviveStoredPlan(record.payload as TransitionPlan)
+    // §52: a conversion-aware comparison of the source value to the target
+    // reference, UNAVAILABLE unless a verified conversion exists.
+    const gap = plan.transitionGap
+    const comparison = gap
+      ? buildReferenceComparison({
+          sourceValue: gap.sourceReference,
+          sourceSymbol: plan.sourceAsset.symbol,
+          conversionRatio: gap.conversionRatio,
+          targetReference: gap.targetReference,
+          targetSymbol: plan.conversionSpec ? plan.conversionSpec.targetAssetMint : undefined,
+        })
+      : null
     return {
-      plan: toJsonValue(record.payload),
+      plan: toJsonValue(plan),
       versions: versions.map((version) => ({
         version: version.version,
         inputHash: version.inputHash,
         outputHash: version.outputHash,
       })),
+      comparison: comparison ? toJsonValue(comparison) : null,
     }
   })
 
@@ -723,6 +740,42 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     const record = await deps.repos.simulations.get(request.params.id)
     if (!record) return reply.code(404).send({ error: 'simulation_not_found' })
     return { simulation: toJsonValue(record.payload) }
+  })
+
+  // --- replay (Section 39) ---------------------------------------------------
+
+  app.post('/api/replay', async (request, reply) => {
+    const parsed = replayRequestSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send({ error: 'validation_failed', issues: parsed.error.issues })
+
+    const record = await deps.repos.plans.get(parsed.data.planId)
+    if (!record) return reply.code(404).send({ error: 'plan_not_found' })
+    const plan = reviveStoredPlan(record.payload as TransitionPlan)
+
+    const preset = getScenarioPreset(parsed.data.scenario ?? 'PUBLIC_MARKET_OPENS')
+    const event = plan.lifecycleEvent
+    const referencePrice = plan.transitionCurve.referencePrice
+    const effectiveAt = event.effectiveAt ?? event.observedAt ?? plan.generatedAt
+
+    const effectiveMs = Date.parse(effectiveAt)
+    if (Number.isNaN(effectiveMs)) {
+      return reply.code(409).send({ error: 'no_event_time', message: 'the event has no usable effective time to replay around' })
+    }
+    const day = 86400 * 1000
+    const shock = preset.referenceShockBps / 10000
+    const postShock = preset.referenceShockBps / 10000 / 2
+
+    // §39: without authorized historical Pyth data these are SIMULATED values.
+    const observations = [
+      { timestamp: new Date(effectiveMs - 3 * day).toISOString(), label: 'PRE-EVENT -3d', value: referencePrice, provenance: 'SIMULATED' as const },
+      { timestamp: new Date(effectiveMs - 1 * day).toISOString(), label: 'PRE-EVENT -1d', value: referencePrice, provenance: 'SIMULATED' as const },
+      { timestamp: new Date(effectiveMs).toISOString(), label: 'EVENT', value: referencePrice.times(1 + shock), provenance: 'SIMULATED' as const },
+      { timestamp: new Date(effectiveMs + 1 * day).toISOString(), label: 'POST-EVENT +1d', value: referencePrice.times(1 + shock), provenance: 'SIMULATED' as const },
+      { timestamp: new Date(effectiveMs + 5 * day).toISOString(), label: 'POST-EVENT +5d', value: referencePrice.times(1 + postShock), provenance: 'SIMULATED' as const },
+    ]
+
+    const result = replayTransition({ events: [event], observations, eventEffectiveAt: effectiveAt })
+    return { replay: toJsonValue(result) }
   })
 
   // --- dbc ------------------------------------------------------------------

@@ -5,7 +5,7 @@ import { DataRow, EmptyNote, Section } from '@/components/section'
 import { StatusBadge } from '@/components/status-badge'
 import { api } from '@/lib/api'
 import { formatNumber, shortAddress } from '@/lib/format'
-import type { CompileResponse } from '@/lib/types'
+import type { CompileResponse, ReplayResultJson } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
 
@@ -88,6 +88,13 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ symb
     else planError = compiled.message ?? compiled.error
   } else {
     planError = assetResult.error === 'asset_not_found' ? 'asset is no longer in the PreStocks registry' : assetResult.error
+  }
+
+  // Section 39 replay, using SIMULATED observations around the recorded event.
+  let replay: ReplayResultJson | null = null
+  if (plan) {
+    const replayResult = await api.replay({ planId: plan.plan.id, scenario: 'PUBLIC_MARKET_OPENS' })
+    if (replayResult.ok) replay = replayResult.data.replay
   }
 
   return (
@@ -174,6 +181,38 @@ export default async function CaseStudyPage({ params }: { params: Promise<{ symb
           </EmptyNote>
         )}
       </Section>
+
+      {replay ? (
+        <Section id="replay" title="Historical replay (Section 39)">
+          <p className="mb-4 text-xs" style={{ color: 'var(--warn)' }}>
+            {replay.provenanceSummary}
+          </p>
+          {(['PRE_EVENT', 'EVENT', 'POST_EVENT'] as const).map((phase) => (
+            <div key={phase} className="mb-4">
+              <p className="label mb-2">{phase.replaceAll('_', '-')}</p>
+              {replay.phases[phase].length === 0 ? (
+                <p className="text-xs" style={{ color: 'var(--faint)' }}>
+                  no observations
+                </p>
+              ) : (
+                <table className="mono w-full text-xs">
+                  <tbody>
+                    {replay.phases[phase].map((point) => (
+                      <tr key={point.timestamp} className="border-b" style={{ borderColor: 'var(--line)' }}>
+                        <td>{point.timestamp.slice(0, 10)}</td>
+                        <td style={{ color: 'var(--muted)' }}>{point.label}</td>
+                        <td className="text-right">{formatNumber(point.value, 2)}</td>
+                        <td style={{ color: 'var(--muted)' }}>{point.lifecycleState}</td>
+                        <td style={{ color: 'var(--warn)' }}>{point.provenance}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          ))}
+        </Section>
+      ) : null}
     </div>
   )
 }

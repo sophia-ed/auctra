@@ -365,6 +365,42 @@ describe('API contract (Section 58)', () => {
     expect(simulation.json().simulation.comparison.note).toContain('No winner')
   })
 
+  it('returns a conversion-aware comparison and a replay', async () => {
+    const compiled = await app.inject({
+      method: 'POST',
+      url: '/api/transition/compile',
+      payload: {
+        symbol: 'SPACEX',
+        conversionRatio: '0.7165',
+        targetAssetMint: 'TARGET_MINT',
+        liquidity: {
+          mode: 'EVENT_ADAPTIVE',
+          segments: 8,
+          referencePrice: '150',
+          targetLiquidity: '250000',
+          quoteMint: 'So11111111111111111111111111111111111111112',
+          migrationQuoteThreshold: '100000',
+        },
+      },
+    })
+    expect(compiled.statusCode).toBe(201)
+    const planId = compiled.json().plan.id
+
+    const read = await app.inject({ method: 'GET', url: `/api/transition/${planId}` })
+    expect(read.statusCode).toBe(200)
+    expect(read.json().comparison).not.toBeNull()
+    expect(read.json().comparison.status).toBe('COMPARABLE')
+
+    const replay = await app.inject({
+      method: 'POST',
+      url: '/api/replay',
+      payload: { planId, scenario: 'IPO_IMMINENT' },
+    })
+    expect(replay.statusCode).toBe(200)
+    expect(replay.json().replay.provenanceSummary).toContain('SIMULATED')
+    expect(replay.json().replay.phases.PRE_EVENT.length).toBeGreaterThan(0)
+  })
+
   it('validates and prepares an unsigned DBC config', async () => {
     const validate = await app.inject({
       method: 'POST',
