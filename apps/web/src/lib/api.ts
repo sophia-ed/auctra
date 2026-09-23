@@ -19,13 +19,17 @@ import type {
   TransitionResponse,
 } from './types'
 
-const PUBLIC_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001'
+/**
+ * Browser requests default to same-origin (`/api/...`), which the Next rewrite
+ * proxies to `API_INTERNAL_URL`. Set NEXT_PUBLIC_API_URL only when the API is on
+ * a separate public origin.
+ */
+const PUBLIC_BASE = process.env.NEXT_PUBLIC_API_URL ?? ''
 /**
  * Server-side rendering runs inside the web container, where `localhost` is not
- * the API. `API_INTERNAL_URL` lets compose point SSR at the api service while the
- * browser keeps using the public URL.
+ * the API, so SSR calls the API service directly.
  */
-const INTERNAL_BASE = process.env.API_INTERNAL_URL ?? PUBLIC_BASE
+const INTERNAL_BASE = process.env.API_INTERNAL_URL ?? 'http://localhost:3001'
 
 function baseUrl(): string {
   return typeof window === 'undefined' ? INTERNAL_BASE : PUBLIC_BASE

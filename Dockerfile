@@ -33,10 +33,13 @@ COPY tsconfig.base.json ./
 COPY packages packages
 COPY apps apps
 COPY tests tests
-ARG NEXT_PUBLIC_API_URL=http://localhost:3001
+ARG NEXT_PUBLIC_API_URL=
 ARG NEXT_PUBLIC_SOLANA_NETWORK=devnet
+# Baked into the Next rewrites, so the web server can proxy /api/* to the API.
+ARG API_INTERNAL_URL=http://localhost:3001
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
-    NEXT_PUBLIC_SOLANA_NETWORK=$NEXT_PUBLIC_SOLANA_NETWORK
+    NEXT_PUBLIC_SOLANA_NETWORK=$NEXT_PUBLIC_SOLANA_NETWORK \
+    API_INTERNAL_URL=$API_INTERNAL_URL
 RUN pnpm --filter @auctra/web build
 
 # --- runtime ----------------------------------------------------------------

@@ -41,12 +41,16 @@ installed and its curve builder is used directly.
 
 ```bash
 docker compose up --build
-# web   http://localhost:3000
-# api   http://localhost:3001/api/health
+# web + api proxy: http://localhost:3000
+# health:          http://localhost:3000/api/health
 ```
 
-Postgres, the API, the worker and the web app run as separate services. Mainnet
+Only `web` is public; it proxies `/api/*` to the API service, so there is one
+domain and no CORS. Postgres, the API and the worker stay internal. Mainnet
 remains gated: it is only selectable when `ENABLE_MAINNET=true` is set explicitly.
+
+See [`docs/deployment.md`](./docs/deployment.md) for the full guide, including
+Coolify setup.
 
 ### Running the API
 
@@ -119,6 +123,7 @@ domain packages here have no React, Next.js, or wallet dependencies.
 | [`docs/security.md`](./docs/security.md) | Network gating, wallet-only signing, validation |
 | [`docs/limitations.md`](./docs/limitations.md) | Everything that is not done or not verified |
 | [`docs/definition-of-done.md`](./docs/definition-of-done.md) | Section 106 audit with honest status |
+| [`docs/deployment.md`](./docs/deployment.md) | Docker VPS and Coolify deployment guide |
 | [`docs/originality.md`](./docs/originality.md) | Prior-art audit |
 | [`docs/technical-paper.md`](./docs/technical-paper.md) | The model, with equations |
 | [`docs/demo-script.md`](./docs/demo-script.md) | 60-second script, pitch, judge walkthrough |
