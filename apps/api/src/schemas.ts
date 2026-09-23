@@ -82,6 +82,10 @@ export const dbcPrepareRequestSchema = z.object({
   tokenDecimal: z.number().int().min(6).max(9),
   initialMarketCap: decimalInput,
   migrationMarketCap: decimalInput,
+  /** Total base-token supply; the SDK curve builder needs it. */
+  totalTokenSupply: z.number().positive().optional(),
+  /** Tokens held back from the curve; the SDK requires headroom. */
+  leftover: z.number().nonnegative().optional(),
 })
 
 export const dbcLabRequestSchema = z.object({

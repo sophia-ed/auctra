@@ -41,6 +41,38 @@ constants, so drift fails CI.
 
 The result is validated with the SDK's own `validateCurve`.
 
+## SDK-backed client (Sections 30, 33)
+
+`createSdkBackedClient({ rpcUrl, commitment })` constructs the real
+`DynamicBondingCurveClient` (defaulting to devnet) and implements the client
+contract:
+
+```text
+createConfig   partner.createConfig(ConfigParameters + accounts)  -> unsigned tx
+createPool     creator.createPool(CreatePoolParams)               -> unsigned tx
+getPool        state.getPool + curve progress + migration threshold
+getConfig      state.getPoolConfig
+getQuote       pool.swapQuote with getCurrentPoint(connection, activationType)
+getPoolQuoteTokenCurveProgress / getPoolMigrationQuoteThreshold
+migrateToDammV2 migration.migrateToDammV2 -> unsigned tx + the two NFT signer keypairs
+```
+
+Findings from the installed SDK that shaped this:
+
+- the returned transaction has **no blockhash**, so the client fetches one and
+  sets the fee payer before serialising; the blockhash is returned so the wallet
+  confirms with the same one;
+- `migrateToDammV2` returns two **position NFT keypairs** that must co-sign, so
+  `UnsignedTransaction.additionalSigners` carries their secret keys;
+- the SDK's own validator runs inside `createConfig` and enforced a rule the docs
+  did not state: **≥1000 bps (10%) liquidity must be locked at day 1**. The
+  generated `liquidityDistribution` locks 25%, and the API now returns the SDK's
+  message as a `400 dbc_config_rejected` instead of a generic 500.
+
+Verified end to end: `/api/dbc/prepare` returned a real unsigned devnet
+transaction (~1.4 KB with a live blockhash).
+
+
 
 ## Adapter surface (Section 30)
 

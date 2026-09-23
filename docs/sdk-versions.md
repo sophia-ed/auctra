@@ -26,9 +26,11 @@ installed** as a dependency of `packages/meteora`. The version guard
 (`scripts/verify-versions.mjs`) resolves it and reports OK. Values confirmed from
 the installed `dist/index.d.ts`: `FEE_DENOMINATOR = 1000000000`,
 `MAX_CURVE_POINT = 16`. The curve builder is used directly by
-`buildSdkCurveParameters`; the network transaction client binding is still
-pending. Gaps a build dependency introduces (e.g. `bigint-buffer`) fall back to
-pure JS if native bindings fail to compile.
+`buildSdkCurveParameters`, and `createSdkBackedClient` wraps the real
+`DynamicBondingCurveClient` for pool/config reads, config and pool creation, and
+DAMM v2 migration (returning unsigned transactions). Gaps a build dependency
+introduces (e.g. `bigint-buffer`) fall back to pure JS if native bindings fail to
+compile.
 
 ### 1a. Frontend stack (Section 59)
 

@@ -747,16 +747,28 @@ export async function createApiServer(deps: ApiDeps): Promise<FastifyInstance> {
     if (!record) return reply.code(404).send({ error: 'plan_not_found' })
     const plan = reviveStoredPlan(record.payload as TransitionPlan)
 
-    const unsigned = await deps.dbc.createConfig({
-      plan: plan.dbcPlan,
-      tokenDecimal: body.tokenDecimal,
-      initialMarketCap: String(body.initialMarketCap),
-      migrationMarketCap: String(body.migrationMarketCap),
-      payer: body.payer,
-      config: body.config,
-      feeClaimer: body.feeClaimer,
-      leftoverReceiver: body.leftoverReceiver,
-    })
+    let unsigned
+    try {
+      unsigned = await deps.dbc.createConfig({
+        plan: plan.dbcPlan,
+        tokenDecimal: body.tokenDecimal,
+        totalTokenSupply: body.totalTokenSupply ?? 1_000_000_000,
+        leftover: body.leftover ?? 500_000_000,
+        initialMarketCap: String(body.initialMarketCap),
+        migrationMarketCap: String(body.migrationMarketCap),
+        payer: body.payer,
+        config: body.config,
+        feeClaimer: body.feeClaimer,
+        leftoverReceiver: body.leftoverReceiver,
+      })
+    } catch (error) {
+      // The SDK's own validator rejects invalid configurations; surface its
+      // message instead of a generic 500.
+      return reply.code(400).send({
+        error: 'dbc_config_rejected',
+        message: error instanceof Error ? error.message : String(error),
+      })
+    }
     await deps.repos.audit.append({
       kind: 'configuration_prepared',
       planId: plan.id,

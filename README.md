@@ -35,7 +35,8 @@ built yet.
 | Docker — `Dockerfile`, `docker-compose.yml` | image builds and the API container responds |
 
 145 tests, clean typecheck across all packages. The Meteora DBC SDK 1.5.12 is
-installed and its curve builder is used directly.
+installed and fully wired: the curve builder is used directly and
+`/api/dbc/prepare` returns a real unsigned devnet transaction.
 
 ## Deployment (Docker VPS)
 

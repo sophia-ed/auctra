@@ -396,10 +396,19 @@ importers:
       '@meteora-ag/dynamic-bonding-curve-sdk':
         specifier: 1.5.12
         version: 1.5.12(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)
+      '@solana/web3.js':
+        specifier: ^1.99.0
+        version: 1.99.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)
+      bn.js:
+        specifier: ^5.2.1
+        version: 5.2.5
       decimal.js:
         specifier: ^10.5.0
         version: 10.6.0
     devDependencies:
+      '@types/bn.js':
+        specifier: ^5.1.6
+        version: 5.2.0
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.4
@@ -1906,6 +1915,9 @@ packages:
 
   '@tailwindcss/postcss@4.3.3':
     resolution: {integrity: sha512-JTSZZGQi1AyKirbLN3azmjVzef92tcX7h+iSqPdaeStyFpGpDlKvvpxeOE8njhbUanbRwr3z8DyzhICWnMtQeg==}
+
+  '@types/bn.js@5.2.0':
+    resolution: {integrity: sha512-DLbJ1BPqxvQhIGbeu8VbUC1DiAiahHtAYvA0ZEAa4P31F7IaArc8z3C3BRQdWX4mtLQuABG4yzp76ZrS02Ui1Q==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -5276,6 +5288,10 @@ snapshots:
       '@tailwindcss/oxide': 4.3.3
       postcss: 8.5.28
       tailwindcss: 4.3.3
+
+  '@types/bn.js@5.2.0':
+    dependencies:
+      '@types/node': 22.20.4
 
   '@types/chai@5.2.3':
     dependencies:

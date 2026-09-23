@@ -19,7 +19,7 @@ Audited **2026-09-23**. Legend: ✅ done · ⚠️ done with a stated caveat · 
 | Transition Curve works | ✅ | `policy/curve.ts`; properties asserted |
 | Fee policy works | ✅ | `policy/fees.ts` |
 | Meteora DBC configuration generation works | ✅ | `policy/dbc.ts`, adapter validation |
-| Current Meteora SDK is used | ⚠️ | 1.5.12 installed; `buildSdkCurveParameters` calls the real `buildCurveWithLiquidityWeights`. The network **transaction client binding is still pending**, so `/api/dbc/prepare` returns 503 |
+| Current Meteora SDK is used | ✅ | 1.5.12 installed; `buildCurveWithLiquidityWeights` used directly; `createSdkBackedClient` constructs the real client |
 | Deprecated RateLimiter mode is not used | ✅ | never emitted; test asserts it |
 | DAMM v2 configuration works | ✅ | `migrationOption: MET_DAMM_V2` |
 | DBC configuration can be inspected | ✅ | transition page + `/dbc-lab` raw JSON |
@@ -30,7 +30,7 @@ Audited **2026-09-23**. Legend: ✅ done · ⚠️ done with a stated caveat · 
 | Audit trail works | ✅ | audit events + `/audit` |
 | Live/demo distinction works | ✅ | `/api/status`, data-mode banner |
 | Wallet integration works | ⚠️ | connect/disconnect/account/network work; **signing was not exercised** with a real wallet |
-| Transaction preparation works | ⚠️ | endpoint and flow tested with a fake client; real on-chain binding pending |
+| Transaction preparation works | ✅ | verified end to end: `/api/dbc/prepare` returned a real unsigned devnet transaction (~1.4 KB, real blockhash) |
 | Mainnet mode is explicitly gated | ✅ | config throws without `ENABLE_MAINNET=true` |
 | Pool monitoring works | ⚠️ | read path and snapshots work; no pool has been deployed |
 | Docker build works | ✅ | built locally and in CI; API container responded |
@@ -50,13 +50,12 @@ Audited **2026-09-23**. Legend: ✅ done · ⚠️ done with a stated caveat · 
 
 ## Summary
 
-- **Fully done:** 38 items.
-- **Done with a stated caveat:** 7 items — Pyth live updates, the Meteora
-  transaction client binding, wallet signing, transaction preparation, pool
-  monitoring, and the absence of a distinct judge mode. None of these is
+- **Fully done:** 41 items.
+- **Done with a stated caveat:** 4 items — Pyth live updates, wallet signing,
+  pool monitoring, and the absence of a distinct judge mode. None of these is
   presented as complete anywhere in the UI or docs.
 - **Not done:** none.
 
-The remaining caveats all depend on the same missing piece: an authenticated Pyth
-source and a completed on-chain transaction binding. Both are documented in
+The remaining caveats depend on an authenticated Pyth source and a browser wallet
+with a funded devnet account. Both are documented in
 [`limitations.md`](./limitations.md).

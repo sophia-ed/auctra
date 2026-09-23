@@ -5,9 +5,9 @@ import {
   validateDbcPlan,
   type ValidationIssue,
 } from './config'
+import { buildSdkCurveParameters } from './sdk-curve'
 import type {
-  DbcConfigParams,
-  DbcPoolParams,
+  DbcPoolCreateRequest,
   DbcPoolState,
   DbcQuote,
   MeteoraDbcClient,
@@ -28,6 +28,11 @@ import type {
 export interface AdapterConfigRequest {
   plan: DbcPlan
   tokenDecimal: number
+  /** quote decimals, usually 9 */
+  tokenQuoteDecimal?: number
+  totalTokenSupply: number
+  /** tokens held back from the curve; the SDK requires headroom */
+  leftover?: number
   initialMarketCap: string
   migrationMarketCap: string
   payer: string
@@ -51,7 +56,8 @@ export class MeteoraDBCAdapter {
     return validateDbcPlan(plan)
   }
 
-  buildConfig(request: AdapterConfigRequest): DbcConfigParams {
+  /** Human-readable mapping of the plan (kept separate from the SDK params). */
+  buildConfig(request: AdapterConfigRequest) {
     const issues = validateDbcPlan(request.plan)
     if (issues.length > 0) {
       throw new Error(`invalid DBC plan: ${issues.map((issue) => issue.code).join(', ')}`)
@@ -62,23 +68,41 @@ export class MeteoraDBCAdapter {
       tokenDecimal: request.tokenDecimal,
     })
     const fee = toFeeParams(request.plan)
-    return {
-      ...curve,
-      ...fee,
+    return { ...curve, ...fee }
+  }
+
+  /**
+   * Build the real SDK `ConfigParameters` for this plan.
+   * Exposed so callers can inspect exactly what would be created.
+   */
+  async buildSdkConfig(request: AdapterConfigRequest) {
+    const issues = validateDbcPlan(request.plan)
+    if (issues.length > 0) {
+      throw new Error(`invalid DBC plan: ${issues.map((issue) => issue.code).join(', ')}`)
+    }
+    return buildSdkCurveParameters(request.plan, {
+      initialMarketCap: Number(request.initialMarketCap),
+      migrationMarketCap: Number(request.migrationMarketCap),
+      totalTokenSupply: request.totalTokenSupply,
+      leftover: request.leftover,
+      tokenBaseDecimal: request.tokenDecimal,
+      tokenQuoteDecimal: request.tokenQuoteDecimal ?? 9,
+    })
+  }
+
+  async createConfig(request: AdapterConfigRequest): Promise<UnsignedTransaction> {
+    const built = await this.buildSdkConfig(request)
+    return this.client.createConfig({
       payer: request.payer,
       config: request.config,
       feeClaimer: request.feeClaimer,
       leftoverReceiver: request.leftoverReceiver,
       quoteMint: request.plan.quoteMint,
-      tokenDecimal: request.tokenDecimal,
-    }
+      sdkParams: built.params,
+    })
   }
 
-  async createConfig(request: AdapterConfigRequest): Promise<UnsignedTransaction> {
-    return this.client.createConfig(this.buildConfig(request))
-  }
-
-  async createPool(params: DbcPoolParams): Promise<UnsignedTransaction> {
+  async createPool(params: DbcPoolCreateRequest): Promise<UnsignedTransaction> {
     return this.client.createPool(params)
   }
 
@@ -90,11 +114,7 @@ export class MeteoraDBCAdapter {
     return this.client.getConfig(address)
   }
 
-  async getQuote(params: {
-    pool: string
-    inputMint: string
-    amount: string
-  }): Promise<DbcQuote> {
+  async getQuote(params: { pool: string; inputMint: string; amount: string }): Promise<DbcQuote> {
     return this.client.getQuote(params)
   }
 
@@ -114,7 +134,7 @@ export class MeteoraDBCAdapter {
       threshold,
       quoteReserve,
       progress,
-      ready: threshold.gt(0) && quoteReserve.gte(threshold),
+      ready: threshold.isPositive() && quoteReserve.gte(threshold),
       model: buildMigrationModel({
         migrationQuoteThreshold: thresholdRaw,
         currentQuoteReserve: pool.quoteReserve,
@@ -123,7 +143,11 @@ export class MeteoraDBCAdapter {
   }
 
   /** Build the unsigned DAMM v2 migration transaction for wallet approval. */
-  async prepareMigration(params: { payer: string; pool: string }): Promise<UnsignedTransaction> {
+  async prepareMigration(params: {
+    payer: string
+    pool: string
+    dammConfig: string
+  }): Promise<UnsignedTransaction> {
     return this.client.migrateToDammV2(params)
   }
 }

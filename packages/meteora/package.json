@@ -20,11 +20,14 @@
   "dependencies": {
     "@auctra/domain": "workspace:*",
     "decimal.js": "^10.5.0",
-    "@meteora-ag/dynamic-bonding-curve-sdk": "1.5.12"
+    "@meteora-ag/dynamic-bonding-curve-sdk": "1.5.12",
+    "bn.js": "^5.2.1",
+    "@solana/web3.js": "^1.99.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.6.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "@types/bn.js": "^5.1.6"
   }
 }

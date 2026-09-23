@@ -35,13 +35,14 @@ export {
   type DbcPoolState,
   type DbcQuote,
   type UnsignedTransaction,
-  type DbcConfigParams,
-  type DbcPoolParams,
+  type DbcConfigRequest,
+  type DbcPoolCreateRequest,
+  type DbcMigrationRequest,
   type MeteoraDbcClient,
   type SdkClientOptions,
   MeteoraSdkUnavailableError,
-  createSdkBackedClient,
 } from './dbc/client'
+export { createSdkBackedClient } from './dbc/sdk-client'
 export {
   MeteoraDBCAdapter,
   type AdapterConfigRequest,

@@ -1,22 +1,21 @@
-import {
-  checkSdkVersion,
-  readInstalledSdkVersion,
-  REQUIRED_SDK_EXPORTS,
-} from './version'
-import type { CurveBuilderParams, FeeParams } from './config'
+import { checkSdkVersion, readInstalledSdkVersion } from './version'
 
 /**
  * Network-facing client contract for the DBC adapter (AUCTRA.md Section 30).
  *
  * The adapter depends on this interface, never on the SDK directly, so the
  * domain/adapter logic stays testable and the SDK binding lives in one place.
+ * `sdkParams` is the SDK's `ConfigParameters` (built by
+ * `buildSdkCurveParameters`); it is typed `unknown` here to keep the SDK out of
+ * the interface.
  */
+
 export interface DbcPoolState {
   address: string
   config: string
   baseMint: string
   quoteMint: string
-  /** Decimal string of the pool's quote reserve. */
+  /** Decimal string of the pool's quote reserve (derived from progress × threshold). */
   quoteReserve: string
   migrationQuoteThreshold: string
   /** 0..1 curve progress. */
@@ -39,18 +38,21 @@ export interface UnsignedTransaction {
   transaction: string
   blockhash?: string
   lastValidBlockHeight?: number
+  /** Base64 secret keys for extra signers (e.g. DAMM v2 migration NFT keypairs). */
+  additionalSigners?: string[]
 }
 
-export interface DbcConfigParams extends CurveBuilderParams, FeeParams {
+export interface DbcConfigRequest {
   payer: string
   config: string
   feeClaimer: string
   leftoverReceiver: string
   quoteMint: string
-  tokenDecimal: number
+  /** ConfigParameters produced by buildSdkCurveParameters. */
+  sdkParams: unknown
 }
 
-export interface DbcPoolParams {
+export interface DbcPoolCreateRequest {
   payer: string
   config: string
   baseMint: string
@@ -60,15 +62,21 @@ export interface DbcPoolParams {
   poolCreator: string
 }
 
+export interface DbcMigrationRequest {
+  payer: string
+  pool: string
+  dammConfig: string
+}
+
 export interface MeteoraDbcClient {
-  createConfig(params: DbcConfigParams): Promise<UnsignedTransaction>
-  createPool(params: DbcPoolParams): Promise<UnsignedTransaction>
+  createConfig(request: DbcConfigRequest): Promise<UnsignedTransaction>
+  createPool(params: DbcPoolCreateRequest): Promise<UnsignedTransaction>
   getPool(address: string): Promise<DbcPoolState>
   getConfig(address: string): Promise<Record<string, unknown>>
   getQuote(params: { pool: string; inputMint: string; amount: string }): Promise<DbcQuote>
   getPoolQuoteTokenCurveProgress(address: string): Promise<number>
   getPoolMigrationQuoteThreshold(address: string): Promise<string>
-  migrateToDammV2(params: { payer: string; pool: string }): Promise<UnsignedTransaction>
+  migrateToDammV2(params: DbcMigrationRequest): Promise<UnsignedTransaction>
 }
 
 export class MeteoraSdkUnavailableError extends Error {
@@ -81,23 +89,4 @@ export class MeteoraSdkUnavailableError extends Error {
 export interface SdkClientOptions {
   rpcUrl?: string
   commitment?: string
-}
-
-/**
- * Resolve an SDK-backed client.
- *
- * The version/export guard (§31) runs first. The network binding itself is
- * completed in the deployment phase, once the SDK is installed and its IDL
- * inspected — Auctra does not invent SDK method signatures.
- */
-export async function createSdkBackedClient(_options: SdkClientOptions = {}): Promise<MeteoraDbcClient> {
-  const installed = readInstalledSdkVersion()
-  const versionCheck = checkSdkVersion(installed)
-  if (!versionCheck.ok) {
-    throw new MeteoraSdkUnavailableError(versionCheck.message)
-  }
-  throw new MeteoraSdkUnavailableError(
-    `DBC SDK ${installed} is installed but the network binding is not wired yet. ` +
-      `Wire the following exports: ${REQUIRED_SDK_EXPORTS.join(', ')}.`,
-  )
 }

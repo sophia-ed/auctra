@@ -99,10 +99,12 @@ export async function buildSdkCurveParameters(
       },
     },
     liquidityDistribution: {
-      partnerPermanentLockedLiquidityPercentage: 0,
-      partnerLiquidityPercentage: 50,
-      creatorPermanentLockedLiquidityPercentage: 0,
-      creatorLiquidityPercentage: 50,
+      // The SDK requires at least 1000 bps (10%) locked at day 1, so a quarter of
+      // the graduated liquidity is permanently locked.
+      partnerPermanentLockedLiquidityPercentage: 25,
+      partnerLiquidityPercentage: 25,
+      creatorPermanentLockedLiquidityPercentage: 25,
+      creatorLiquidityPercentage: 25,
     },
     lockedVesting: {
       totalLockedVestingAmount: 0,

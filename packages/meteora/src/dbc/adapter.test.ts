@@ -8,10 +8,9 @@ import {
 } from '@auctra/domain'
 import {
   MeteoraDBCAdapter,
-  MeteoraSdkUnavailableError,
   createSdkBackedClient,
-  type DbcConfigParams,
-  type DbcPoolParams,
+  type DbcConfigRequest,
+  type DbcPoolCreateRequest,
   type MeteoraDbcClient,
 } from '../index'
 
@@ -35,18 +34,18 @@ function makePlan(): DbcPlan {
 }
 
 class FakeClient implements MeteoraDbcClient {
-  createdConfigs: DbcConfigParams[] = []
-  createdPools: DbcPoolParams[] = []
+  createdConfigs: DbcConfigRequest[] = []
+  createdPools: DbcPoolCreateRequest[] = []
   migrations: { payer: string; pool: string }[] = []
   reserve = '40000'
   threshold = '100000'
   progress = 0.4
 
-  async createConfig(params: DbcConfigParams) {
+  async createConfig(params: DbcConfigRequest) {
     this.createdConfigs.push(params)
     return { transaction: 'base64-config' }
   }
-  async createPool(params: DbcPoolParams) {
+  async createPool(params: DbcPoolCreateRequest) {
     this.createdPools.push(params)
     return { transaction: 'base64-pool' }
   }
@@ -74,7 +73,7 @@ class FakeClient implements MeteoraDbcClient {
   async getPoolMigrationQuoteThreshold() {
     return this.threshold
   }
-  async migrateToDammV2(params: { payer: string; pool: string }) {
+  async migrateToDammV2(params: { payer: string; pool: string; dammConfig: string }) {
     this.migrations.push(params)
     return { transaction: 'base64-migrate' }
   }
@@ -85,6 +84,8 @@ const request = {
   tokenDecimal: 9,
   initialMarketCap: '5000',
   migrationMarketCap: '1000000',
+  totalTokenSupply: 1_000_000_000,
+  leftover: 500_000_000,
   payer: 'PAYER',
   config: 'CONFIG',
   feeClaimer: 'FEE',
@@ -153,12 +154,25 @@ describe('Meteora DBC adapter (Section 30)', () => {
   it('prepares an unsigned migration transaction and never submits', async () => {
     const client = new FakeClient()
     const adapter = new MeteoraDBCAdapter(client)
-    const tx = await adapter.prepareMigration({ payer: 'PAYER', pool: 'POOL' })
+    const tx = await adapter.prepareMigration({ payer: 'PAYER', pool: 'POOL', dammConfig: 'DAMM' })
     expect(tx.transaction).toBe('base64-migrate')
-    expect(client.migrations).toEqual([{ payer: 'PAYER', pool: 'POOL' }])
+    expect(client.migrations).toEqual([{ payer: 'PAYER', pool: 'POOL', dammConfig: 'DAMM' }])
   })
 
-  it('does not hand back a client until the transaction binding is wired', async () => {
-    await expect(createSdkBackedClient()).rejects.toBeInstanceOf(MeteoraSdkUnavailableError)
+  it('constructs an SDK-backed client offline and exposes the full interface', async () => {
+    const client = await createSdkBackedClient()
+    const methods = [
+      'createConfig',
+      'createPool',
+      'getPool',
+      'getConfig',
+      'getQuote',
+      'getPoolQuoteTokenCurveProgress',
+      'getPoolMigrationQuoteThreshold',
+      'migrateToDammV2',
+    ] as const
+    for (const method of methods) {
+      expect(typeof client[method]).toBe('function')
+    }
   })
 })
