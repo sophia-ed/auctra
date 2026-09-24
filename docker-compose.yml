@@ -26,10 +26,13 @@ services:
     expose:
       - '5432'
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-auctra}']
+      # Use the container's own POSTGRES_USER/POSTGRES_DB and give first-boot
+      # initdb time before failures count.
+      test: ['CMD-SHELL', 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
       interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 30
+      start_period: 15s
     restart: unless-stopped
 
   api:

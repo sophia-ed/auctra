@@ -93,6 +93,18 @@ Push to `main` and redeploy to update. The `pgdata` volume keeps the database.
 - Docker's build arg `API_INTERNAL_URL` is baked into the Next rewrites, so if you
   rename the `api` service, update `x-app.build.args.API_INTERNAL_URL` too.
 
+### "postgres is unhealthy" / dependency failed to start
+
+First-boot Postgres initialization on a slow host can outlast a short healthcheck
+window, so the check uses a `start_period` and enough retries. If it still fails:
+
+- Check the `postgres` container logs — if it shows auth errors, the `pgdata`
+  volume holds a cluster initialized with different credentials. Either keep the
+  same `POSTGRES_PASSWORD` across redeploys or clear the volume (`docker volume rm
+  <project>_pgdata`) and redeploy.
+- Set `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` explicitly in Coolify
+  and do not change the password without clearing the volume.
+
 ## CI
 
 `.github/workflows/ci.yml` runs install, language lint, typecheck, tests, build,
