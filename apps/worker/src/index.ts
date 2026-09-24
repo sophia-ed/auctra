@@ -1,5 +1,9 @@
 import { loadConfig } from '@auctra/config'
-import { createInMemoryRepositories, createPostgresRepositories } from '@auctra/database'
+import {
+  createInMemoryRepositories,
+  createPostgresRepositories,
+  ensureSchema,
+} from '@auctra/database'
 import {
   DemoLifecycleProvider,
   HttpPreStocksProvider,
@@ -17,9 +21,15 @@ import { AuctraWorker } from './worker'
  */
 export async function main(): Promise<void> {
   const config = loadConfig(process.env)
-  const repos = config.databaseUrl
-    ? createPostgresRepositories({ pool: new Pool({ connectionString: config.databaseUrl }) })
-    : createInMemoryRepositories()
+  let repos
+  if (config.databaseUrl) {
+    const pool = new Pool({ connectionString: config.databaseUrl })
+    await ensureSchema(pool)
+    console.log(JSON.stringify({ ts: new Date().toISOString(), event: 'schema_applied' }))
+    repos = createPostgresRepositories({ pool })
+  } else {
+    repos = createInMemoryRepositories()
+  }
 
   const prestocks = new HttpPreStocksProvider({ baseUrl: config.prestocksApiUrl })
   const lifecycle = config.demoMode

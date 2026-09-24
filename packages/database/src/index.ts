@@ -24,3 +24,4 @@ export {
 } from './repositories'
 export { createInMemoryRepositories, newId } from './memory'
 export { createPostgresRepositories, type PostgresRepositoriesOptions } from './postgres'
+export { ensureSchema } from './migrate'

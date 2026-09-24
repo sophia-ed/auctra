@@ -1,5 +1,9 @@
 import { loadConfig } from '@auctra/config'
-import { createInMemoryRepositories, createPostgresRepositories } from '@auctra/database'
+import {
+  createInMemoryRepositories,
+  createPostgresRepositories,
+  ensureSchema,
+} from '@auctra/database'
 import { MeteoraDBCAdapter, createSdkBackedClient } from '@auctra/meteora'
 import { DemoLifecycleProvider, HttpPreStocksProvider, PreStocksLifecycleProvider } from '@auctra/prestocks'
 import { HttpPythProvider, PythProProvider } from '@auctra/pyth'
@@ -9,9 +13,15 @@ import { createApiServer } from './server'
 export async function main(): Promise<void> {
   const config = loadConfig(process.env)
   // PostgreSQL in deployment; in-memory for demo mode or when DATABASE_URL is unset.
-  const repos = config.databaseUrl
-    ? createPostgresRepositories({ pool: new Pool({ connectionString: config.databaseUrl }) })
-    : createInMemoryRepositories()
+  let repos
+  if (config.databaseUrl) {
+    const pool = new Pool({ connectionString: config.databaseUrl })
+    await ensureSchema(pool)
+    console.log(JSON.stringify({ ts: new Date().toISOString(), event: 'schema_applied' }))
+    repos = createPostgresRepositories({ pool })
+  } else {
+    repos = createInMemoryRepositories()
+  }
 
   // The DBC adapter is wired when the SDK is available. It defaults to devnet,
   // so it cannot reach mainnet by accident, and it only ever builds UNSIGNED

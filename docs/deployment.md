@@ -77,17 +77,15 @@ for slow first boots.
 Use a Coolify-managed database instead of the in-compose service:
 
 1. **New Resource → Database → PostgreSQL** (v16).
-2. Apply the schema once:
-   ```bash
-   docker run --rm -i -e PGPASSWORD='<db password>' postgres:16-alpine \
-     psql "postgres://<user>@<host>:5432/<db>" < packages/database/sql/0001_init.sql
-   ```
-3. Deploy the app from **`docker-compose.coolify.yml`** (no Postgres service) with:
+2. Deploy the app from **`docker-compose.coolify.yml`** (no Postgres service) with:
    ```env
    DATABASE_URL=postgres://<user>:<password>@<host>:5432/<db>
    DEMO_MODE=true
    ENABLE_MAINNET=false
    ```
+3. The schema applies itself: on startup, the API and the worker run the DDL
+   (`IF NOT EXISTS`) from `packages/database/sql/0001_init.sql`. No manual step.
+   Check the logs for `schema_applied`.
 
 With either shape: assign a domain only to `web` (port 3000), and set the
 healthcheck path `/api/health`.
