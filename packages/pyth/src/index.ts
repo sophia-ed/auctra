@@ -42,3 +42,12 @@ export {
   HttpPythProvider,
   MockPythProvider,
 } from './provider'
+export {
+  DEFAULT_PRO_BASE_URL,
+  DEFAULT_PRO_CHANNEL,
+  PRO_PROPERTIES,
+  type PythProProviderOptions,
+  fetchProLatestObservation,
+  fetchProPriceAt,
+  PythProProvider,
+} from './pro'

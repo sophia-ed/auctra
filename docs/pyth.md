@@ -5,6 +5,30 @@ Source: `packages/pyth/src/`. Research: [`research/2026-09-23-pyth.md`](./resear
 Pyth provides the external market-state layer. Auctra uses price, confidence,
 market session and feed freshness — not a single number treated as truth.
 
+## Two products (do not confuse them)
+
+Pyth has two products with different endpoints and different fields. They use the
+same Bearer API key from the [Pyth Terminal](https://pythdata.app/signup), but they
+are not interchangeable.
+
+| | Pyth Core | Pyth Pro (Lazer) |
+|---|---|---|
+| REST base | `https://pyth.dourolabs.app/hermes` | `https://pyth-lazer.dourolabs.app` |
+| Updates endpoint | `GET /v2/updates/price/latest` | `POST /v1/latest_price` |
+| History endpoint | — | `POST /v1/price` (and `https://pyth.dourolabs.app/v1` history) |
+| Feed ids | 64-hex | numeric (`priceFeedId`) — but you can pass `symbols` |
+| marketSession | **not provided** | provided |
+| feedUpdateTimestamp | **not provided** | provided |
+| publisherCount | not provided | provided |
+
+This matters because the fields Auctra cares about most — market session and
+feed freshness — only exist on **Pro**. Auctra uses Pro when a key is configured
+and Core's keyless discovery otherwise.
+
+For browser/frontend apps the key must not be embedded; Pro supports minting a
+short-lived JWT (Frontend Authentication). Auctra keeps the key server-side and
+never exposes it.
+
 ## Access model (verified)
 
 **Base URL:** `https://pyth.dourolabs.app/hermes` (Pyth's documented endpoint since

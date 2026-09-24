@@ -32,7 +32,16 @@ The schema is applied from `packages/database/sql/0001_init.sql` on first start.
 
 | Variable | Where to get it | Without it |
 |---|---|---|
-| `PYTH_API_KEY` | Sign up at the [Pyth Terminal](https://pythdata.app/signup) — Hermes now requires a key. The Stocklana Pyth track prize includes 3 months of Pyth Pro. | references read `UNCONFIGURED`, never faked |
+| `PYTH_API_KEY` | Sign up at the [Pyth Terminal](https://pythdata.app/signup). One key covers both Hermes (Core) and Lazer (Pro). The Stocklana Pyth track prize includes 3 months of Pyth Pro. | references read `UNCONFIGURED`, never faked |
+
+### Pyth endpoints used
+
+- Discovery (keyless): `{PYTH_HERMES_URL}/v2/price_feeds`.
+- Core updates (keyed): `{PYTH_HERMES_URL}/v2/updates/price/latest` with
+  `Authorization: Bearer <key>`.
+- Pro (Lazer) updates (keyed): `POST https://pyth-lazer.dourolabs.app/v1/latest_price`
+  with the Bearer key — this is the path that returns market session and feed
+  freshness.
 | `SOLANA_RPC_URL` | devnet is free: `https://api.devnet.solana.com`; production: a hosted Solana RPC | DBC prepare/reads 503 |
 | `NEXT_PUBLIC_SOLANA_RPC_URL` | same | wallet uses `clusterApiUrl(devnet)` |
 

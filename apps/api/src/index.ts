@@ -2,7 +2,7 @@ import { loadConfig } from '@auctra/config'
 import { createInMemoryRepositories, createPostgresRepositories } from '@auctra/database'
 import { MeteoraDBCAdapter, createSdkBackedClient } from '@auctra/meteora'
 import { DemoLifecycleProvider, HttpPreStocksProvider, PreStocksLifecycleProvider } from '@auctra/prestocks'
-import { HttpPythProvider } from '@auctra/pyth'
+import { HttpPythProvider, PythProProvider } from '@auctra/pyth'
 import { Pool } from 'pg'
 import { createApiServer } from './server'
 
@@ -33,7 +33,11 @@ export async function main(): Promise<void> {
   const prestocks = new HttpPreStocksProvider({ baseUrl: config.prestocksApiUrl })
   // Live references only when a key is present; without one the reference is
   // reported as unavailable rather than faked.
-  const pyth = new HttpPythProvider({ baseUrl: config.pythHermesUrl, apiKey: config.pythApiKey })
+  // Pyth Pro (Lazer) when a key is present — it returns marketSession,
+  // feedUpdateTimestamp and publisherCount. Hermes Core otherwise.
+  const pyth = config.pythApiKey
+    ? new PythProProvider({ apiKey: config.pythApiKey })
+    : new HttpPythProvider({ baseUrl: config.pythHermesUrl })
   const lifecycle = config.demoMode
     ? new DemoLifecycleProvider()
     : new PreStocksLifecycleProvider({ baseUrl: 'https://www.prestocks.com' })

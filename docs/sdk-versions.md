@@ -58,6 +58,8 @@ Tailwind v4 setup used here (per the official Next.js guide): install
 | PreStocks pages | `https://www.prestocks.com/{symbol}` | keyless | lifecycle disclosures (no schema; parse + content-hash). |
 | Pyth Hermes discovery | `https://pyth.dourolabs.app/hermes/v2/price_feeds` | **keyless** | items with `id`, `market_hours`, `attributes.symbol`. Feed-list snapshot hash (TSLA): `fb25b573cbdec8208f77614a073a43ec61a171d9aae676b00bf4e6b9d2d6fbdc`. |
 | Pyth Hermes updates | `https://pyth.dourolabs.app/hermes/v2/updates/price/latest` | **`Authorization: Bearer <key>`** (401 observed without) | response shape verified from Pyth docs; keys from the Pyth Terminal. |
+| Pyth Pro (Lazer) updates | `POST https://pyth-lazer.dourolabs.app/v1/latest_price` | **Bearer** | Pro OpenAPI: `pyth-lazer-0.dourolabs.app/docs/openapi.json`. Provides marketSession + feedUpdateTimestamp + publisherCount. |
+| Pyth Pro (Lazer) history | `POST https://pyth-lazer.dourolabs.app/v1/price`, `https://pyth.dourolabs.app/v1` | **Bearer** | historical timestamped updates. |
 | Pyth Pro stream | Pyth Pro subscription | API key | payload fields per `docs/pyth.md`. |
 | Meteora docs | `github.com/MeteoraAg/ts-sdk` `packages/dynamic-bonding-curve/docs.md` | keyless | docs may lead/ lag the released package — verify against `dist/index.d.ts`. |
 | Meteora DBC program | `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN` | — | **unconfirmed against IDL**; confirm before use. |

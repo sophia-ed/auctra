@@ -5,7 +5,7 @@ import {
   HttpPreStocksProvider,
   PreStocksLifecycleProvider,
 } from '@auctra/prestocks'
-import { HttpPythProvider } from '@auctra/pyth'
+import { HttpPythProvider, PythProProvider } from '@auctra/pyth'
 import { Pool } from 'pg'
 import { AuctraWorker } from './worker'
 
@@ -29,7 +29,7 @@ export async function main(): Promise<void> {
   // Live references require an authenticated Pyth source; without a key the
   // worker simply does not perform the reference stage.
   const pyth = config.pythApiKey
-    ? new HttpPythProvider({ baseUrl: config.pythHermesUrl, apiKey: config.pythApiKey })
+    ? new PythProProvider({ apiKey: config.pythApiKey })
     : undefined
 
   const intervalMs = Number(process.env.WORKER_INTERVAL_MS ?? 60000)
