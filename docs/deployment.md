@@ -63,7 +63,35 @@ curl -s localhost:3000/api/assets | jq '.assets | length'
 
 ## Coolify
 
-Coolify can deploy the compose stack straight from the repository.
+Coolify can deploy the compose stack straight from the repository. There are two
+shapes:
+
+### A. All-in-one compose (default)
+
+Uses `docker-compose.yml`, which includes its own Postgres service and volume.
+Nothing else to provision. This is the simplest path and the healthcheck is tuned
+for slow first boots.
+
+### B. Dedicated Coolify Postgres (recommended for reliability)
+
+Use a Coolify-managed database instead of the in-compose service:
+
+1. **New Resource → Database → PostgreSQL** (v16).
+2. Apply the schema once:
+   ```bash
+   docker run --rm -i -e PGPASSWORD='<db password>' postgres:16-alpine \
+     psql "postgres://<user>@<host>:5432/<db>" < packages/database/sql/0001_init.sql
+   ```
+3. Deploy the app from **`docker-compose.coolify.yml`** (no Postgres service) with:
+   ```env
+   DATABASE_URL=postgres://<user>:<password>@<host>:5432/<db>
+   DEMO_MODE=true
+   ENABLE_MAINNET=false
+   ```
+
+With either shape: assign a domain only to `web` (port 3000), and set the
+healthcheck path `/api/health`.
+
 
 1. **New Resource → Docker Compose.**
 2. **Source:** public repository `https://github.com/sophia-ed/auctra`, branch `main`.

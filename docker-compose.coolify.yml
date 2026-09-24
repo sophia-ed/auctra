@@ -1,0 +1,55 @@
+# Coolify variant (AUCTRA.md Sections 81, 103).
+#
+# Use this when Postgres is a dedicated Coolify resource instead of an
+# in-compose service. The app connects to it via DATABASE_URL. Apply
+# packages/database/sql/0001_init.sql to the database once before deploying.
+
+x-app: &app
+  build:
+    context: .
+    args:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+      NEXT_PUBLIC_SOLANA_NETWORK: ${NEXT_PUBLIC_SOLANA_NETWORK:-devnet}
+      API_INTERNAL_URL: http://api:3001
+  image: auctra:app
+
+services:
+  api:
+    <<: *app
+    command: pnpm --filter @auctra/api start
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      ENABLE_MAINNET: ${ENABLE_MAINNET:-false}
+      PRESTOCKS_API_URL: ${PRESTOCKS_API_URL:-https://prestocks.com/api/prestocks}
+      PYTH_HERMES_URL: ${PYTH_HERMES_URL:-https://pyth.dourolabs.app/hermes}
+      PYTH_API_KEY: ${PYTH_API_KEY:-}
+      SOLANA_RPC_URL: ${SOLANA_RPC_URL:-}
+      PORT: '3001'
+    expose:
+      - '3001'
+    restart: unless-stopped
+
+  worker:
+    <<: *app
+    command: pnpm --filter @auctra/worker start
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      PRESTOCKS_API_URL: ${PRESTOCKS_API_URL:-https://prestocks.com/api/prestocks}
+      PYTH_HERMES_URL: ${PYTH_HERMES_URL:-https://pyth.dourolabs.app/hermes}
+      PYTH_API_KEY: ${PYTH_API_KEY:-}
+      WORKER_INTERVAL_MS: ${WORKER_INTERVAL_MS:-60000}
+    restart: unless-stopped
+
+  web:
+    <<: *app
+    command: pnpm --filter @auctra/web start
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+      API_INTERNAL_URL: http://api:3001
+    ports:
+      - '3000:3000'
+    depends_on:
+      - api
+    restart: unless-stopped
