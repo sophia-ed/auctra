@@ -125,6 +125,8 @@ domain packages here have no React, Next.js, or wallet dependencies.
 | [`docs/limitations.md`](./docs/limitations.md) | Everything that is not done or not verified |
 | [`docs/definition-of-done.md`](./docs/definition-of-done.md) | Section 106 audit with honest status |
 | [`docs/deployment.md`](./docs/deployment.md) | Docker VPS and Coolify deployment guide |
+| [`USER.md`](./USER.md) | How to use the product |
+| [`SUBMISSION.md`](./SUBMISSION.md) | Everything to do to submit |
 | [`docs/originality.md`](./docs/originality.md) | Prior-art audit |
 | [`docs/technical-paper.md`](./docs/technical-paper.md) | The model, with equations |
 | [`docs/demo-script.md`](./docs/demo-script.md) | 60-second script, pitch, judge walkthrough |
