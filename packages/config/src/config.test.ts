@@ -41,7 +41,7 @@ describe('network selection (Section 34)', () => {
   it('applies documented endpoint defaults', () => {
     const config = loadConfig({})
     expect(config.prestocksApiUrl).toBe('https://prestocks.com/api/prestocks')
-    expect(config.pythHermesUrl).toBe('https://hermes.pyth.network')
+    expect(config.pythHermesUrl).toBe('https://pyth.dourolabs.app/hermes')
     expect(config.pythApiKey).toBeUndefined()
   })
 })

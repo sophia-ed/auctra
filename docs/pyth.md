@@ -7,10 +7,15 @@ market session and feed freshness — not a single number treated as truth.
 
 ## Access model (verified)
 
+**Base URL:** `https://pyth.dourolabs.app/hermes` (Pyth's documented endpoint since
+the Pyth Core upgrade, Aug 26 2026). The legacy host `hermes.pyth.network` still
+works but now also requires a key, and Pyth's guide says to move off it.
+API keys come from the [Pyth Terminal](https://pythdata.app/signup).
+
 | Endpoint | Auth |
 |---|---|
 | `GET /v2/price_feeds?query=…` (discovery) | keyless |
-| `GET /v2/updates/price/latest` | API key required (`401` observed without one) |
+| `GET /v2/updates/price/latest` | `Authorization: Bearer <key>`; `401` without one |
 | Pyth Pro stream | subscription |
 
 `HttpPythProvider` performs keyless discovery, and produces a live price when an

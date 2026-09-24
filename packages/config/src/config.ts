@@ -97,7 +97,8 @@ export function loadConfig(env: Record<string, string | undefined> = {}): Auctra
     solanaRpcUrl: parsed.SOLANA_RPC_URL,
     solanaWsUrl: parsed.SOLANA_WS_URL,
     prestocksApiUrl: parsed.PRESTOCKS_API_URL ?? 'https://prestocks.com/api/prestocks',
-    pythHermesUrl: parsed.PYTH_HERMES_URL ?? 'https://hermes.pyth.network',
+    // Pyth's current documented Hermes base (post Core upgrade, Aug 26 2026).
+    pythHermesUrl: parsed.PYTH_HERMES_URL ?? 'https://pyth.dourolabs.app/hermes',
     pythApiKey: parsed.PYTH_API_KEY,
     meteoraCluster: parsed.METEORA_CLUSTER,
   }

@@ -56,8 +56,8 @@ Tailwind v4 setup used here (per the official Next.js guide): install
 |---|---|---|---|
 | PreStocks | `https://prestocks.com/api/prestocks` | keyless | JSON array; required keys: `name, symbol, description, image, external_url, contract_address, markPrice, markValuation, tokenPrice, impliedValuation, supply`. Snapshot hash: `eb85b7e5037229af447c5143ee53795738170f3899965b048076198a03eb2a26`. |
 | PreStocks pages | `https://www.prestocks.com/{symbol}` | keyless | lifecycle disclosures (no schema; parse + content-hash). |
-| Pyth Hermes discovery | `https://hermes.pyth.network/v2/price_feeds` | **keyless** | items with `id`, `market_hours`, `attributes.symbol`. Feed-list snapshot hash (TSLA): `fb25b573cbdec8208f77614a073a43ec61a171d9aae676b00bf4e6b9d2d6fbdc`. |
-| Pyth Hermes updates | `https://hermes.pyth.network/v2/updates/price/latest` | **API key required** (401 observed) | response shape **not captured** — verify once keyed. |
+| Pyth Hermes discovery | `https://pyth.dourolabs.app/hermes/v2/price_feeds` | **keyless** | items with `id`, `market_hours`, `attributes.symbol`. Feed-list snapshot hash (TSLA): `fb25b573cbdec8208f77614a073a43ec61a171d9aae676b00bf4e6b9d2d6fbdc`. |
+| Pyth Hermes updates | `https://pyth.dourolabs.app/hermes/v2/updates/price/latest` | **`Authorization: Bearer <key>`** (401 observed without) | response shape verified from Pyth docs; keys from the Pyth Terminal. |
 | Pyth Pro stream | Pyth Pro subscription | API key | payload fields per `docs/pyth.md`. |
 | Meteora docs | `github.com/MeteoraAg/ts-sdk` `packages/dynamic-bonding-curve/docs.md` | keyless | docs may lead/ lag the released package — verify against `dist/index.d.ts`. |
 | Meteora DBC program | `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN` | — | **unconfirmed against IDL**; confirm before use. |

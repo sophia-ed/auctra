@@ -11,7 +11,13 @@ import {
   type PythFeedRegistryEntry,
 } from './registry'
 
-export const DEFAULT_PYTH_HERMES_URL = 'https://hermes.pyth.network'
+/**
+ * Current documented Hermes base URL (Pyth Core upgrade, Aug 26 2026):
+ *   https://pyth.dourolabs.app/hermes
+ * `hermes.pyth.network` is the legacy host; Pyth says to move off it. Both serve
+ * the same routes, but only the documented one is the recommended default.
+ */
+export const DEFAULT_PYTH_HERMES_URL = 'https://pyth.dourolabs.app/hermes'
 
 export class PythUnavailableError extends Error {
   constructor(message: string) {

@@ -9,7 +9,7 @@ Pyth prices.
 | Variable | Value | Notes |
 |---|---|---|
 | `PRESTOCKS_API_URL` | `https://prestocks.com/api/prestocks` | public PreStocks endpoint; prefilled |
-| `PYTH_HERMES_URL` | `https://hermes.pyth.network` | public Hermes host; prefilled |
+| `PYTH_HERMES_URL` | `https://pyth.dourolabs.app/hermes` | Pyth's documented Hermes host (post-upgrade); prefilled |
 | `DEMO_MODE` | `true` | cached lifecycle seeds; demo runs without a wallet |
 | `ENABLE_MAINNET` | `false` | mainnet is unreachable unless set to `true` explicitly |
 | `NEXT_PUBLIC_API_URL` | *(empty)* | empty = same-origin; the web server proxies `/api/*` |
@@ -32,7 +32,7 @@ The schema is applied from `packages/database/sql/0001_init.sql` on first start.
 
 | Variable | Where to get it | Without it |
 |---|---|---|
-| `PYTH_API_KEY` | Request via the Pyth developer hub — Hermes now requires a key. The Stocklana Pyth track prize includes 3 months of Pyth Pro. | references read `UNCONFIGURED`, never faked |
+| `PYTH_API_KEY` | Sign up at the [Pyth Terminal](https://pythdata.app/signup) — Hermes now requires a key. The Stocklana Pyth track prize includes 3 months of Pyth Pro. | references read `UNCONFIGURED`, never faked |
 | `SOLANA_RPC_URL` | devnet is free: `https://api.devnet.solana.com`; production: a hosted Solana RPC | DBC prepare/reads 503 |
 | `NEXT_PUBLIC_SOLANA_RPC_URL` | same | wallet uses `clusterApiUrl(devnet)` |
 
