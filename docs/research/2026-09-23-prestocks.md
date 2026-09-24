@@ -113,3 +113,18 @@ Historical events (xAI) remain stored as historical examples and are surfaced wi
 - Is there an authoritative machine-readable disclosure endpoint behind the pages? Until confirmed, page parsing is `PRESTOCKS_PAGE` with a content hash.
 - For SpaceX, is a numeric SPACEX→SPCXx ratio published anywhere official? Until verified, the ratio stays `UNKNOWN` (Section 19).
 - `markValuation` vs `impliedValuation` basis: confirm before displaying anything that implies `price × supply`.
+
+## 5. PreStocks site cross-check (2026-09-24)
+
+Read `prestocks.com`, `/products`, `/ecosystem` and `/faq`:
+
+- The products table has a **"Mark Price Premium %"** column, confirming the
+  premium is a first-class quantity. Auctra reports it as a mark deviation in bps.
+- PreStocks describe themselves as tokens that *track the price of pre-IPO
+  companies*, "fully backed, tradable 24/7, no minimums".
+- Legal framing: economic exposure only, no ownership/voting/dividend rights, no
+  guaranteed secondary-market liquidity, not affiliated with the referenced
+  companies, not US-available. The Auctra demo asset is labelled accordingly.
+- Meteora appears in the PreStocks ecosystem as a **Liquidity** partner.
+- There is **no official lifecycle/conversion API**; the asset-page disclosures
+  remain the only source. Nothing found contradicts the implementation.

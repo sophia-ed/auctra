@@ -98,7 +98,9 @@ model with equations. [`docs/product.md`](./docs/product.md) covers scope,
 [`docs/tracks.md`](./docs/tracks.md) maps every section of the spec to code. For
 using the app there's [`USER.md`](./USER.md); for submitting, [`SUBMISSION.md`](./SUBMISSION.md).
 Deployment is in [`docs/deployment.md`](./docs/deployment.md) and where each
-environment variable comes from is in [`docs/env.md`](./docs/env.md).
+environment variable comes from is in [`docs/env.md`](./docs/env.md). The
+section-by-section verification of the whole spec is in
+[`docs/verification.md`](./docs/verification.md).
 
 ## Provenance
 
