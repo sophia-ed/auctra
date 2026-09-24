@@ -4,139 +4,103 @@
 
 Auctra is a lifecycle intelligence and liquidity-transition system for tokenized
 private markets on Solana. It starts with [PreStocks](https://prestocks.com),
-tracks each asset's corporate-action lifecycle, incorporates external market
-state from [Pyth](https://pyth.network), and turns the resulting transition
-conditions into an inspectable [Meteora DBC](https://docs.meteora.ag/developer-guides/dbc)
-liquidity configuration.
+tracks each asset's corporate-action lifecycle, reads market state from
+[Pyth](https://pyth.network), and turns the result into an inspectable
+[Meteora DBC](https://docs.meteora.ag/developer-guides/dbc) configuration.
 
-This repository is being built to the specification in [`AUCTRA.md`](./AUCTRA.md).
-It is currently in the **domain-core** phase: the deterministic engine and the
-provider adapters exist and are tested. The web/API/worker applications are not
-built yet.
+The part worth caring about is the transition engine, not the dashboard. A
+PreStock doesn't stay in one market state forever — a company IPOs, gets
+acquired, converts, or hits a deadline — and Auctra models what the market needs
+when that happens, as a reproducible plan rather than a page of numbers.
 
-## Status
+It's analysis and configuration tooling. It doesn't custody anything, doesn't
+give investment advice, and doesn't submit a transaction without a wallet
+signature.
 
-| Layer | State |
-|---|---|
-| Originality audit + pinned versions | done — [`docs/originality.md`](./docs/originality.md), [`docs/research/`](./docs/research/README.md), [`docs/sdk-versions.md`](./docs/sdk-versions.md) |
-| Sections 1–30 (ingestion, lifecycle, transition, curve, fees, migration, DBC adapter) | done — see [`docs/tracks.md`](./docs/tracks.md) |
-| Sections 31–58 (reporting, replay, network gating, database, typed API) | done (API only; web UI not started) |
-| `@auctra/domain` — lifecycle, transition, policy, plan, simulation, clocks, dossier, reporting, replay | done (59 tests) |
-| `@auctra/prestocks` — asset provider, normalization, lifecycle providers | done (15 tests) |
-| `@auctra/pyth` — reference model, freshness, feed registry, discovery | done (12 tests) |
-| `@auctra/meteora` — DBC adapter, validation, migration status, version guard, real SDK curve builder | done (17 tests) |
-| `@auctra/config` — network gating (DEMO/DEVNET/MAINNET) | done (7 tests) |
-| `@auctra/database` — Postgres schema, in-memory + pg repositories | done (10 tests) |
-| `@auctra/cache` — TTL cache with graceful degradation | done (4 tests) |
-| `@auctra/api` — typed backend (Section 58 routes, status) | done (16 tests) |
-| `@auctra/web` — Next.js app | 15 routes incl. DBC lab, audit, monitor, pools, case studies, demo; Solana wallet (devnet-safe) |
-| `@auctra/worker` — background refresh (read-only) | done (4 tests) |
-| `tests/e2e` — one complete pipeline test | done (1 test) |
-| Docker — `Dockerfile`, `docker-compose.yml` | image builds and the API container responds |
-
-145 tests, clean typecheck across all packages. The Meteora DBC SDK 1.5.12 is
-installed and fully wired: the curve builder is used directly and
-`/api/dbc/prepare` returns a real unsigned devnet transaction.
-
-## Deployment (Docker VPS)
+## Run it
 
 ```bash
-docker compose up --build
-# web + api proxy: http://localhost:3000
-# health:          http://localhost:3000/api/health
+corepack enable && pnpm install
+pnpm --filter @auctra/api dev    # http://localhost:3001
+pnpm --filter @auctra/web dev    # http://localhost:3000
 ```
 
-Only `web` is public; it proxies `/api/*` to the API service, so there is one
-domain and no CORS. Postgres, the API and the worker stay internal. Mainnet
-remains gated: it is only selectable when `ENABLE_MAINNET=true` is set explicitly.
-
-See [`docs/deployment.md`](./docs/deployment.md) for the full guide, including
-Coolify setup.
-
-### Running the API
+Or the whole stack in one go:
 
 ```bash
-pnpm --filter @auctra/api dev   # http://localhost:3001
-curl localhost:3001/api/health
+docker compose up --build        # http://localhost:3000
+curl localhost:3000/api/health
 ```
 
-The API uses the in-memory repository layer and the `AUCTRA DEMO` lifecycle
-provider by default (`DEMO_MODE=true`). Mainnet is unreachable unless
-`ENABLE_MAINNET=true` is set explicitly.
+Only the web port is public — it proxies `/api/*` internally, so there's one
+domain and no CORS. See [`docs/deployment.md`](./docs/deployment.md).
 
-Nothing here is investment advice. Auctra produces analysis and proposed
-configurations; it does not custody assets and does not submit transactions
-without an explicit wallet signature.
+To work through the pipeline without touching any of that, open `/demo` once the
+app is running.
 
-## Requirements
-
-- Node.js >= 20.9 (developed on 24.x)
-- pnpm (the repo pins `pnpm@12.5.1` via `packageManager`)
-
-## Quick start
+## Checks
 
 ```bash
-corepack enable
-pnpm install
 pnpm verify:versions
+pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
 ```
 
-From a clean checkout this runs the deterministic engine's test suite. No
-network access is required for the tests — provider adapters take an injected
-`fetch` and are exercised against recorded fixtures. Network is only used by the
-live provider paths and by `pnpm verify:versions`.
+150 tests across the packages. The tests don't need network access — the
+providers take an injected `fetch` and run against recorded fixtures. Network is
+only used by the live provider paths and `pnpm verify:versions`.
 
-## Layout
+## What's inside
 
 ```text
 packages/
-  domain/     deterministic engine: math, lifecycle, transition, policy, plan, simulation
-  prestocks/  PreStocks REST provider + normalization
-  pyth/       Pyth reference provider + freshness / market-session model
-  meteora/    Meteora DBC configuration adapter + version guard
-docs/
-  originality.md   prior-art audit (required before code)
-  sdk-versions.md  pinned protocol/SDK versions
-  research/        raw evidence for every external fact
-scripts/
-  verify-versions.mjs   Section 31 version safety check
+  domain/     the engine: lifecycle, transition, policy, plan, simulation
+  prestocks/  PreStocks REST provider and the lifecycle disclosure parser
+  pyth/       reference model, freshness, feed registry, Hermes access
+  meteora/    the DBC adapter, real SDK curve builder, transaction client
+  config/     environment and network gating
+  database/   Postgres schema, in-memory + pg repositories
+  cache/      TTL cache that never empties on an upstream failure
+
+apps/
+  web/        the Next.js app (assets, dossier, builder, lab, monitor, audit, demo)
+  api/        the typed Fastify backend
+  worker/     scheduled refresh, read-only
+
+tests/e2e/    one complete pipeline test
 ```
 
-Frontend code must never be imported into domain packages (AUCTRA.md §61). The
-domain packages here have no React, Next.js, or wallet dependencies.
+## The honest part
 
-## Documentation
+This is a hackathon build with a real deadline, so the limitations matter more
+than the features. A few things to know before judging:
 
-| Document | Contents |
-|---|---|
-| [`docs/product.md`](./docs/product.md) | What Auctra is and is not |
-| [`docs/architecture.md`](./docs/architecture.md) | System diagram, layout, dependency direction |
-| [`docs/lifecycle-engine.md`](./docs/lifecycle-engine.md) | States, derivation rules, providers |
-| [`docs/transition-model.md`](./docs/transition-model.md) | Premium, conversion, gap, plan, reproducibility |
-| [`docs/transition-curve.md`](./docs/transition-curve.md) | Curve mathematics, intensity, fees, activation |
-| [`docs/pyth.md`](./docs/pyth.md) | Reference model, freshness, sessions, feed registry |
-| [`docs/meteora.md`](./docs/meteora.md) | Adapter surface, enums, migration, version safety |
-| [`docs/simulation.md`](./docs/simulation.md) | Model, scenarios, baseline comparison, replay |
-| [`docs/data-provenance.md`](./docs/data-provenance.md) | Sources, hashes, provenance classes, audit trail |
-| [`docs/security.md`](./docs/security.md) | Network gating, wallet-only signing, validation |
-| [`docs/limitations.md`](./docs/limitations.md) | Everything that is not done or not verified |
-| [`docs/definition-of-done.md`](./docs/definition-of-done.md) | Section 106 audit with honest status |
-| [`docs/deployment.md`](./docs/deployment.md) | Docker VPS and Coolify deployment guide |
-| [`USER.md`](./USER.md) | How to use the product |
-| [`SUBMISSION.md`](./SUBMISSION.md) | Everything to do to submit |
-| [`docs/originality.md`](./docs/originality.md) | Prior-art audit |
-| [`docs/technical-paper.md`](./docs/technical-paper.md) | The model, with equations |
-| [`docs/demo-script.md`](./docs/demo-script.md) | 60-second script, pitch, judge walkthrough |
-| [`docs/sdk-versions.md`](./docs/sdk-versions.md) | Pinned versions and verification |
-| [`docs/tracks.md`](./docs/tracks.md) | Track map and section-to-code index |
-| [`HACKATHON_SUBMISSION.md`](./HACKATHON_SUBMISSION.md) | Submission description |
+- Only three of the eight current PreStocks have a Pyth reference, so the
+  transition gap is often `NOT COMPUTABLE`. That's the intended output, not a bug.
+- Live Pyth prices need `PYTH_API_KEY`. Without it the app says `UNCONFIGURED`
+  instead of faking a number.
+- The Meteora SDK (1.5.12) is installed and wired; `/api/dbc/prepare` returns a
+  real unsigned devnet transaction. Nobody has signed one with a real wallet yet,
+  and no pool has been deployed.
+- The simulator is a documented approximation of DBC, not an on-chain replica.
+
+[`docs/limitations.md`](./docs/limitations.md) and
+[`docs/definition-of-done.md`](./docs/definition-of-done.md) are the places to
+check the rest.
+
+## Read more
+
+Start with [`docs/technical-paper.md`](./docs/technical-paper.md) if you want the
+model with equations. [`docs/product.md`](./docs/product.md) covers scope,
+[`docs/originality.md`](./docs/originality.md) is the prior-art audit, and
+[`docs/tracks.md`](./docs/tracks.md) maps every section of the spec to code. For
+using the app there's [`USER.md`](./USER.md); for submitting, [`SUBMISSION.md`](./SUBMISSION.md).
 
 ## Provenance
 
-Every externally sourced fact carries `source`, `retrievedAt`, and `sourceType`.
-Possible source types: `PRESTOCKS_API`, `PRESTOCKS_PAGE`, `PYTH`, `SOLANA`,
-`METEORA`, `MANUAL`, `SIMULATION`. Manual data is labelled `MANUAL`; modelled
-data is labelled `SIMULATED`. See [`docs/research/`](./docs/research/README.md).
+Every externally sourced fact carries a `source`, a `retrievedAt` and a
+`sourceType`. Manual data is labelled `MANUAL`, modelled data is labelled
+`SIMULATED`, and nothing simulated is shown as live. The raw evidence is in
+[`docs/research/`](./docs/research/README.md).
