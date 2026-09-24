@@ -11,10 +11,11 @@ present in this build, it is stated rather than implied.
   constructs the real `DynamicBondingCurveClient`. `/api/dbc/prepare` returns a
   genuine **unsigned** devnet transaction (verified: ~1.4 KB with a real
   blockhash). It defaults to devnet, so it cannot reach mainnet by accident.
-- **The fee denominator and program id are now partly confirmed**: the installed
-  SDK exports `FEE_DENOMINATOR = 1000000000` (matching
-  `PROVISIONAL_FEE_DENOMINATOR`) and `MAX_CURVE_POINT = 16`. The DBC program id
-  remains unconfirmed against the IDL.
+- **The fee denominator and program id are confirmed**: the installed SDK exports
+  `FEE_DENOMINATOR = 1000000000` and `MAX_CURVE_POINT = 16`, and the developer
+  guide confirms the program id `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN`
+  (same on mainnet and devnet). The fee-scheduler period units and the exact
+  `liquidityWeights` scale remain SDK-verified rather than documented.
 - **The SDK's curve builder always produces 16 segments** and requires leftover
   token headroom; Auctra resamples its policy weights onto 16 and exposes
   `leftover` explicitly. Its validator also requires ≥10% locked liquidity at day

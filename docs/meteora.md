@@ -72,6 +72,35 @@ Findings from the installed SDK that shaped this:
 Verified end to end: `/api/dbc/prepare` returned a real unsigned devnet
 transaction (~1.4 KB with a live blockhash).
 
+## Cross-checked against docs.meteora.ag
+
+Recorded facts that the code and docs now agree with (read from the developer
+guide and the formulas page, 2026-09-24):
+
+- **Program ID** `dbcij3LWUppWqq96dh6gJWwBifmcGfLSB5D4DuSMaqN` — the same on
+  mainnet and devnet. `DBC_PROGRAM_ID` is now confirmed, not provisional.
+- **Pool Authority** `FhVo3mqL8PW5pH5U2CN4XE33DokiyZnUwuGpH2hmHLuM`.
+- **Fee numerator denominator is `1,000,000,000`**; the total fee numerator is
+  capped at `990,000,000` (99%). Auctra's fee policy stays within [10, 1000] bps.
+- **Base fee** is a scheduler (fixed, linear-decay or exponential-decay); the
+  RateLimiter is deprecated for new configs, and Auctra never emits it.
+- **Pool creation fee** is between `0.001` and `100` SOL in lamports.
+- **Migration**: a pool migrates when `quote reserve ≥ migration quote threshold`.
+  The configurable partner/creator migration fee applies, and a fixed **0.2%
+  protocol liquidity migration fee** also applies at migration.
+- **Migration keepers run on mainnet** (they migrate when the threshold matches
+  known quote mints — e.g. 10 SOL, 750 USDC). On devnet, the
+  [Manual Migrator](https://migrator.meteora.ag) handles both. **Auctra does not
+  run a keeper and does not migrate pools itself.** A migration is either
+  permissionless on mainnet or manual via the Migrator; Auctra only builds the
+  unsigned `migrateToDammV2` transaction.
+- **Leftover** is the unused base supply for a fixed-supply launch after the
+  migrated pool and base fees — which is why the curve builder requires leftover
+  headroom (the `leftOverDelta` constraint we hit).
+
+What stays SDK-verified rather than doc-stated: the fee scheduler's
+`numberOfPeriod`/`totalDuration` units for timestamp activation, and the exact
+`liquidityWeights` scale — both are flagged in the code rather than asserted.
 
 
 ## Adapter surface (Section 30)
