@@ -1,15 +1,17 @@
 'use client'
 
 import { useMemo, type ReactNode } from 'react'
-import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
-import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare'
 import { clusterApiUrl } from '@solana/web3.js'
 import '@solana/wallet-adapter-react-ui/styles.css'
 
 /**
  * Solana wallet context (AUCTRA.md Section 57).
+ *
+ * We register no legacy wallet adapters: current wallets are Standard Wallets
+ * (W3C) and are auto-detected. This is what silences the "registered as a
+ * Standard Wallet" console warning.
  *
  * The cluster is chosen explicitly from NEXT_PUBLIC_SOLANA_NETWORK and defaults
  * to devnet; it is never silently mainnet. The browser wallet is the only signer
@@ -24,7 +26,7 @@ export const SOLANA_ENDPOINT =
   process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? clusterApiUrl(SOLANA_CLUSTER)
 
 export function WalletProviders({ children }: { children: ReactNode }) {
-  const wallets = useMemo(() => [new PhantomWalletAdapter(), new SolflareWalletAdapter()], [])
+  const wallets = useMemo(() => [], [])
   return (
     <ConnectionProvider endpoint={SOLANA_ENDPOINT}>
       <WalletProvider wallets={wallets} autoConnect={false}>
